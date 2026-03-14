@@ -67,43 +67,9 @@ pnpm test
 
 ### 测试报告
 
-| 模块 | 测试文件 | 测试数量 | 状态 |
-|------|----------|----------|------|
-| Auth Library | tests/lib/auth.test.ts | 12 | ✅ 通过 |
-| Auth Validations | tests/lib/validations/auth.test.ts | 10 | ✅ 通过 |
-| Admin Users API | tests/api/admin/users.test.ts | 12 | ✅ 通过 |
-| ThemeSwitch Component | tests/components/ThemeSwitch.test.tsx | 4 | ✅ 通过 |
+详细测试报告请查看 [CHANGELOG.md](./CHANGELOG.md)
 
 **总计**: 38 个测试用例，全部通过 ✅
-
-### 测试覆盖详情
-
-#### Auth Library (`lib/auth.ts`)
-- ✅ 密码哈希生成
-- ✅ 密码验证（正确/错误密码）
-- ✅ JWT Token 生成
-- ✅ JWT Token 验证（有效/无效/空 Token）
-- ✅ Authorization Header 解析
-
-#### Auth Validations (`lib/validations/auth.ts`)
-- ✅ 注册数据验证（邮箱格式、用户名长度、密码长度）
-- ✅ 登录数据验证（邮箱格式、密码非空）
-- ✅ 缺失字段验证
-
-#### Admin Users API (`app/api/admin/users/route.ts`)
-- ✅ 未登录访问拦截 (401)
-- ✅ 非管理员访问拦截 (403)
-- ✅ 用户列表获取
-- ✅ 用户搜索功能
-- ✅ 状态筛选功能
-- ✅ 用户状态更新
-- ✅ 参数验证（缺少 userId、缺少 isActive）
-- ✅ 自我状态修改限制
-
-#### ThemeSwitch Component (`components/ThemeSwitch.tsx`)
-- ✅ 组件渲染
-- ✅ 主题切换功能
-- ✅ 深色/浅色主题图标显示
 
 ## 项目结构
 
