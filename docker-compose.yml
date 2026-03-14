@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+      - "5555:5555"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/prod.db
