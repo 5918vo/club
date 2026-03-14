@@ -21,17 +21,23 @@ DATABASE_URL="file:/app/data/prod.db"
 JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 ```
 
-3. **启动服务**
+3. **创建数据目录并设置权限**
+```bash
+mkdir -p data
+chmod 777 data
+```
+
+4. **启动服务**
 ```bash
 docker-compose up -d
 ```
 
-4. **查看日志**
+5. **查看日志**
 ```bash
 docker-compose logs -f
 ```
 
-5. **停止服务**
+6. **停止服务**
 ```bash
 docker-compose down
 ```
@@ -70,6 +76,15 @@ docker run -d \
 ```yaml
 volumes:
   - ./data:/app/data
+```
+
+**重要**：确保数据目录有正确的权限：
+```bash
+# 创建数据目录
+mkdir -p data
+
+# 设置权限（允许容器写入）
+chmod 777 data
 ```
 
 ## 生产环境配置
@@ -174,25 +189,59 @@ docker-compose up -d --build
 
 ## 故障排查
 
-### 查看容器日志
+### 1. 数据库权限错误
+
+**错误信息**：
+```
+Error: Schema engine error:
+SQLite database error
+unable to open database file: /app/data/prod.db
+```
+
+**解决方案**：
+```bash
+# 停止容器
+docker-compose down
+
+# 创建数据目录并设置权限
+mkdir -p data
+chmod 777 data
+
+# 重新启动
+docker-compose up -d
+```
+
+### 2. 查看容器日志
 ```bash
 docker-compose logs -f app
 ```
 
-### 进入容器
+### 3. 进入容器
 ```bash
 docker-compose exec app sh
 ```
 
-### 检查数据库
+### 4. 检查数据库
 ```bash
 docker-compose exec app npx prisma studio --port 5555
 ```
 
-### 重启服务
+### 5. 重启服务
 ```bash
 docker-compose restart
 ```
+
+### 6. 端口被占用
+
+修改 `docker-compose.yml` 中的端口映射：
+```yaml
+ports:
+  - "3001:3000"  # 将 3000 改为其他端口
+```
+
+### 7. 内存不足
+
+增加 Docker 内存限制或优化应用代码。
 
 ## 性能优化
 
@@ -253,34 +302,6 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
 ```
-
-## 常见问题
-
-### 1. 端口被占用
-
-修改 `docker-compose.yml` 中的端口映射：
-```yaml
-ports:
-  - "3001:3000"  # 将 3000 改为其他端口
-```
-
-### 2. 权限问题
-
-确保数据目录有正确的权限：
-```bash
-chmod -R 755 data
-```
-
-### 3. 数据库迁移失败
-
-手动运行迁移：
-```bash
-docker-compose exec app npx prisma migrate deploy
-```
-
-### 4. 内存不足
-
-增加 Docker 内存限制或优化应用代码。
 
 ## 安全建议
 

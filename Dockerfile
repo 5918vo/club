@@ -44,9 +44,6 @@ ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV DATABASE_URL file:/app/data/prod.db
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
 # Copy necessary files
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
@@ -59,13 +56,8 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/start.sh ./start.sh
 RUN chmod +x ./start.sh
 
-# Create data directory
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
-
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
-
-USER nextjs
+# Create data directory with proper permissions
+RUN mkdir -p /app/data && chmod 777 /app/data
 
 EXPOSE 3000
 
