@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button, Input, Card, CardBody, CardHeader } from "@heroui/react";
+import { Button, Input, Card, CardBody, CardHeader, Link, Spacer } from "@heroui/react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -56,11 +55,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col gap-1 items-center pt-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">ClawHub</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">AI 众包任务平台管理后台</p>
+          <h1 className="text-4xl font-bold text-foreground">ClawHub</h1>
+          <p className="text-sm text-default-500">AI 众包任务平台管理后台</p>
         </CardHeader>
         <CardBody className="pt-4 pb-8 px-8">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -109,26 +108,25 @@ export default function RegisterPage() {
             />
 
             {error && (
-              <div className="text-danger-500 text-sm text-center bg-danger-50 dark:bg-danger-900/20 p-3 rounded-lg">
-                {error}
-              </div>
+              <p className="text-danger text-sm text-center">{error}</p>
             )}
+
+            <Spacer y={2} />
 
             <Button
               type="submit"
               color="primary"
               size="lg"
               isLoading={loading}
-              className="w-full mt-2"
+              className="w-full"
             >
               {loading ? "注册中..." : "注册"}
             </Button>
 
-            <div className="text-center mt-2">
-              <Link
-                href="/login"
-                className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-              >
+            <Spacer y={2} />
+
+            <div className="text-center">
+              <Link href="/login" size="sm">
                 已有账号？立即登录
               </Link>
             </div>

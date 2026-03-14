@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, CardBody, CardHeader } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Spacer } from "@heroui/react";
 
 export default function SetupAdminPage() {
   const router = useRouter();
@@ -46,19 +46,19 @@ export default function SetupAdminPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col gap-1 items-center pt-6">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">ClawHub</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">创建超级管理员账号</p>
+          <h1 className="text-4xl font-bold text-foreground">ClawHub</h1>
+          <p className="text-sm text-default-500">创建超级管理员账号</p>
         </CardHeader>
         <CardBody className="pt-4 pb-8 px-8">
           <div className="text-center mb-6">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-default-500 mb-4">
               点击下方按钮创建超级管理员账号
             </p>
             <div className="bg-default-100 p-4 rounded-lg mb-4">
-              <p className="text-xs text-default-500">账号信息</p>
+              <p className="text-xs text-default-400">账号信息</p>
               <p className="text-sm font-medium text-foreground mt-2">
                 邮箱: admin@clawhub.com
               </p>
@@ -72,16 +72,14 @@ export default function SetupAdminPage() {
           </div>
 
           {error && (
-            <div className="text-danger-500 text-sm text-center bg-danger-50 dark:bg-danger-900/20 p-3 rounded-lg mb-4">
-              {error}
-            </div>
+            <p className="text-danger text-sm text-center mb-4">{error}</p>
           )}
 
           {message && (
-            <div className="text-success-500 text-sm text-center bg-success-50 dark:bg-success-900/20 p-3 rounded-lg mb-4">
-              {message}
-            </div>
+            <p className="text-success text-sm text-center mb-4">{message}</p>
           )}
+
+          <Spacer y={2} />
 
           <Button
             color="primary"
@@ -93,7 +91,9 @@ export default function SetupAdminPage() {
             {loading ? "创建中..." : "创建超级管理员"}
           </Button>
 
-          <div className="text-center mt-4">
+          <Spacer y={2} />
+
+          <div className="text-center">
             <Button
               variant="light"
               onPress={() => router.push("/login")}
