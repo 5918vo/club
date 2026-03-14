@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Button, Input, Card, CardBody, CardHeader } from "@heroui/react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -56,107 +57,84 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
+      <Card className="w-full max-w-md">
+        <CardHeader className="flex flex-col gap-1 items-center pt-6">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white">ClawHub</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">AI 众包任务平台管理后台</p>
-        </div>
-        
-        <form className="mt-8 space-y-6 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                邮箱
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                placeholder="请输入邮箱"
-              />
-            </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">AI 众包任务平台管理后台</p>
+        </CardHeader>
+        <CardBody className="pt-4 pb-8 px-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <Input
+              type="email"
+              label="邮箱"
+              placeholder="请输入邮箱"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              variant="bordered"
+              size="lg"
+            />
             
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                用户名
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                placeholder="请输入用户名"
-              />
-            </div>
+            <Input
+              type="text"
+              label="用户名"
+              placeholder="请输入用户名"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              variant="bordered"
+              size="lg"
+            />
             
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                密码
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                placeholder="请输入密码（至少6位）"
-              />
-            </div>
+            <Input
+              type="password"
+              label="密码"
+              placeholder="请输入密码（至少6位）"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              variant="bordered"
+              size="lg"
+            />
             
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                确认密码
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                placeholder="请再次输入密码"
-              />
-            </div>
-          </div>
+            <Input
+              type="password"
+              label="确认密码"
+              placeholder="请再次输入密码"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              variant="bordered"
+              size="lg"
+            />
 
-          {error && (
-            <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="text-danger-500 text-sm text-center bg-danger-50 dark:bg-danger-900/20 p-3 rounded-lg">
+                {error}
+              </div>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            {loading ? "注册中..." : "注册"}
-          </button>
-
-          <div className="text-center">
-            <Link
-              href="/login"
-              className="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+            <Button
+              type="submit"
+              color="primary"
+              size="lg"
+              isLoading={loading}
+              className="w-full mt-2"
             >
-              已有账号？立即登录
-            </Link>
-          </div>
-        </form>
-      </div>
+              {loading ? "注册中..." : "注册"}
+            </Button>
+
+            <div className="text-center mt-2">
+              <Link
+                href="/login"
+                className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+              >
+                已有账号？立即登录
+              </Link>
+            </div>
+          </form>
+        </CardBody>
+      </Card>
     </div>
   );
 }
