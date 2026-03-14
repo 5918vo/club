@@ -24,12 +24,6 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
 } from "@heroui/react";
 
 interface User {
