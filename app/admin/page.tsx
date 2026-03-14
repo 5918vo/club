@@ -2,34 +2,45 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import {
   Navbar,
   NavbarBrand,
   NavbarContent,
-  NavbarItem,
   Button,
   Card,
   CardBody,
   Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
   Chip,
-  Divider,
   Avatar,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Listbox,
-  ListboxItem,
-  ListboxSection,
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Pagination,
+  Select,
+  SelectItem,
+  Spinner,
 } from "@heroui/react";
+import { 
+  Users, 
+  ClipboardList, 
+  BarChart3, 
+  LogOut, 
+  Settings,
+  Search,
+  Ban,
+  CheckCircle,
+} from "lucide-react";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
 
-interface User {
+interface UserInfo {
   id: string;
   email: string;
   username: string;
@@ -38,17 +49,42 @@ interface User {
   createdAt: string;
 }
 
-type MenuKey = "basic" | "users" | "tasks" | "statistics";
+interface UserListItem {
+  id: string;
+  email: string;
+  username: string;
+  role: string;
+  openClawId: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+type MenuKey = "users" | "tasks" | "statistics";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminPage() {
   const router = useRouter();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<MenuKey>("basic");
-  const [openClawIdInput, setOpenClawIdInput] = useState("");
-  const [binding, setBinding] = useState(false);
-  const [error, setError] = useState("");
+  const [activeMenu, setActiveMenu] = useState<MenuKey>("users");
+
+  const [userPage, setUserPage] = useState(1);
+  const [userSearch, setUserSearch] = useState("");
+  const [userStatus, setUserStatus] = useState("");
+
+  const usersApiUrl = activeMenu === "users"
+    ? `/api/admin/users?page=${userPage}&limit=10${userSearch ? `&search=${userSearch}` : ""}${userStatus ? `&status=${userStatus}` : ""}`
+    : null;
+
+  const { data: usersData, isLoading: userLoading, mutate: mutateUsers } = useSWR(
+    usersApiUrl,
+    fetcher
+  );
+
+  const userList = usersData?.users || [];
+  const userTotal = usersData?.pagination?.total || 0;
+  const userTotalPages = Math.ceil(userTotal / 10);
 
   useEffect(() => {
     fetchUser();
@@ -70,6 +106,32 @@ export default function AdminPage() {
     }
   };
 
+  const handleToggleUserStatus = async (targetUser: UserListItem) => {
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: targetUser.id,
+          isActive: !targetUser.isActive,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "操作失败");
+        return;
+      }
+
+      mutateUsers();
+    } catch (error) {
+      alert("网络错误，请稍后重试");
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -80,215 +142,158 @@ export default function AdminPage() {
     }
   };
 
-  const handleBindOpenClawId = async () => {
-    if (!openClawIdInput.trim()) {
-      setError("请输入绑定 Token");
-      return;
-    }
-
-    setBinding(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/user/openclaw", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ bindToken: openClawIdInput.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "绑定失败");
-        setBinding(false);
-        return;
-      }
-
-      setUser(data.user);
-      onClose();
-      setOpenClawIdInput("");
-    } catch (err) {
-      setError("网络错误，请稍后重试");
-    } finally {
-      setBinding(false);
-    }
-  };
-
-  const handleUnbindOpenClawId = async () => {
-    if (!confirm("确定要解绑 OpenClaw ID 吗？")) {
-      return;
-    }
-
-    setBinding(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/user/openclaw", {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "解绑失败");
-        setBinding(false);
-        return;
-      }
-
-      setUser(data.user);
-    } catch (err) {
-      setError("网络错误，请稍后重试");
-    } finally {
-      setBinding(false);
-    }
-  };
-
-  const isAdmin = user?.role === "ADMIN";
-
   const menuItems = [
     {
-      key: "basic" as MenuKey,
-      label: "基本信息",
-      icon: "👤",
+      key: "users" as MenuKey,
+      label: "用户管理",
+      icon: Users,
+    },
+    {
+      key: "tasks" as MenuKey,
+      label: "任务管理",
+      icon: ClipboardList,
+    },
+    {
+      key: "statistics" as MenuKey,
+      label: "数据统计",
+      icon: BarChart3,
     },
   ];
 
-  if (isAdmin) {
-    menuItems.push(
-      {
-        key: "users" as MenuKey,
-        label: "用户管理",
-        icon: "👥",
-      },
-      {
-        key: "tasks" as MenuKey,
-        label: "任务管理",
-        icon: "📋",
-      },
-      {
-        key: "statistics" as MenuKey,
-        label: "数据统计",
-        icon: "📊",
-      }
-    );
-  }
-
   const renderContent = () => {
     switch (activeMenu) {
-      case "basic":
-        return (
-          <Card>
-            <CardBody className="p-6">
-              <h2 className="text-2xl font-bold mb-6">基本信息</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-default-500">用户ID</label>
-                  <p className="font-mono text-sm">{user?.id}</p>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-default-500">用户名</label>
-                  <p>{user?.username}</p>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-default-500">邮箱</label>
-                  <p>{user?.email}</p>
-                </div>
-                
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-default-500">角色</label>
-                  <Chip
-                    color={user?.role === "ADMIN" ? "secondary" : user?.role === "PUBLISHER" ? "primary" : "success"}
-                    variant="flat"
-                  >
-                    {user?.role === "ADMIN" ? "管理员" : user?.role === "PUBLISHER" ? "发布者" : "用户"}
-                  </Chip>
-                </div>
-                
-                <div className="flex flex-col gap-2 md:col-span-2">
-                  <label className="text-sm text-default-500">注册时间</label>
-                  <p>{user?.createdAt ? new Date(user.createdAt).toLocaleString("zh-CN") : ""}</p>
-                </div>
-
-                <Divider className="md:col-span-2" />
-
-                <div className="md:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-sm text-default-500">OpenClaw ID</label>
-                      {user?.openClawId ? (
-                        <p className="font-mono">{user.openClawId}</p>
-                      ) : (
-                        <p className="text-default-400">未绑定</p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      {user?.openClawId ? (
-                        <Button
-                          color="danger"
-                          variant="light"
-                          onPress={handleUnbindOpenClawId}
-                          isLoading={binding}
-                        >
-                          解绑
-                        </Button>
-                      ) : (
-                        <Button
-                          color="primary"
-                          onPress={onOpen}
-                        >
-                          绑定 OpenClaw ID
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        );
-
       case "users":
         return (
-          <Card>
-            <CardBody className="p-6">
-              <h2 className="text-2xl font-bold mb-6">用户管理</h2>
-              <div className="text-center py-12 text-default-400">
-                <div className="text-6xl mb-4">👥</div>
-                <p>用户管理功能开发中...</p>
+          <>
+            <div className="flex items-center justify-end mb-6">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="搜索用户名或邮箱"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setUserPage(1);
+                      mutateUsers();
+                    }
+                  }}
+                  startContent={<Search size={18} className="text-default-400" />}
+                  className="w-64"
+                />
+                <Select
+                  placeholder="状态筛选"
+                  selectedKeys={userStatus ? [userStatus] : []}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    setUserStatus(selected || "");
+                    setUserPage(1);
+                  }}
+                  className="w-32"
+                >
+                  <SelectItem key="active">生效</SelectItem>
+                  <SelectItem key="disabled">禁用</SelectItem>
+                </Select>
               </div>
-            </CardBody>
-          </Card>
+            </div>
+
+            <Table 
+              aria-label="用户列表"
+              bottomContent={
+                userTotalPages > 1 ? (
+                  <div className="flex w-full justify-center">
+                    <Pagination
+                      isCompact
+                      showControls
+                      showShadow
+                      color="primary"
+                      page={userPage}
+                      total={userTotalPages}
+                      onChange={(page) => setUserPage(page)}
+                    />
+                  </div>
+                ) : null
+              }
+            >
+              <TableHeader>
+                <TableColumn key="username">用户名</TableColumn>
+                <TableColumn key="email">邮箱</TableColumn>
+                <TableColumn key="openClawId">绑定 Token</TableColumn>
+                <TableColumn key="status">状态</TableColumn>
+                <TableColumn key="createdAt">注册时间</TableColumn>
+                <TableColumn key="actions">操作</TableColumn>
+              </TableHeader>
+              <TableBody 
+                items={userList}
+                isLoading={userLoading}
+                loadingContent={<Spinner label="加载中..." />}
+                emptyContent="暂无用户数据"
+              >
+                {(item: UserListItem) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar name={item.username} size="sm" />
+                        <span>{item.username}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{item.email}</TableCell>
+                    <TableCell>
+                      {item.openClawId ? (
+                        <code className="text-xs bg-default-100 px-2 py-1 rounded">{item.openClawId}</code>
+                      ) : (
+                        <span className="text-default-400">未绑定</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color={item.isActive ? "success" : "danger"}
+                      >
+                        {item.isActive ? "生效" : "禁用"}
+                      </Chip>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(item.createdAt).toLocaleString("zh-CN")}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="light"
+                        color={item.isActive ? "danger" : "success"}
+                        startContent={
+                          item.isActive ? (
+                            <Ban size={16} />
+                          ) : (
+                            <CheckCircle size={16} />
+                          )
+                        }
+                        onPress={() => handleToggleUserStatus(item)}
+                      >
+                        {item.isActive ? "禁用" : "启用"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </>
         );
 
       case "tasks":
         return (
-          <Card>
-            <CardBody className="p-6">
-              <h2 className="text-2xl font-bold mb-6">任务管理</h2>
-              <div className="text-center py-12 text-default-400">
-                <div className="text-6xl mb-4">📋</div>
-                <p>任务管理功能开发中...</p>
-              </div>
-            </CardBody>
-          </Card>
+          <div className="text-center py-12 text-default-400">
+            <ClipboardList size={64} className="mx-auto mb-4 opacity-50" />
+            <p>任务管理功能开发中...</p>
+          </div>
         );
 
       case "statistics":
         return (
-          <Card>
-            <CardBody className="p-6">
-              <h2 className="text-2xl font-bold mb-6">数据统计</h2>
-              <div className="text-center py-12 text-default-400">
-                <div className="text-6xl mb-4">📊</div>
-                <p>数据统计功能开发中...</p>
-              </div>
-            </CardBody>
-          </Card>
+          <div className="text-center py-12 text-default-400">
+            <BarChart3 size={64} className="mx-auto mb-4 opacity-50" />
+            <p>数据统计功能开发中...</p>
+          </div>
         );
 
       default:
@@ -299,7 +304,7 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg">加载中...</p>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -309,13 +314,13 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Navbar */}
-      <Navbar isBordered>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar isBordered maxWidth="full">
         <NavbarBrand>
           <p className="font-bold text-xl text-primary">ClawHub</p>
         </NavbarBrand>
         <NavbarContent justify="end">
+          <ThemeSwitch />
           <Dropdown>
             <DropdownTrigger>
               <Button variant="light" startContent={<Avatar name={user.username} size="sm" />}>
@@ -323,13 +328,10 @@ export default function AdminPage() {
               </Button>
             </DropdownTrigger>
             <DropdownMenu>
-              <DropdownItem key="profile" className="gap-2">
-                <p className="font-semibold">个人信息</p>
-              </DropdownItem>
-              <DropdownItem key="settings" className="gap-2">
+              <DropdownItem key="settings" startContent={<Settings size={18} />}>
                 <p>设置</p>
               </DropdownItem>
-              <DropdownItem key="logout" color="danger" className="gap-2" onPress={handleLogout}>
+              <DropdownItem key="logout" color="danger" startContent={<LogOut size={18} />} onPress={handleLogout}>
                 <p>退出登录</p>
               </DropdownItem>
             </DropdownMenu>
@@ -338,66 +340,35 @@ export default function AdminPage() {
       </Navbar>
 
       <div className="flex flex-1">
-        {/* Sidebar */}
         <div className="w-64 bg-content1 border-r border-divider p-4">
-          <Listbox
-            aria-label="管理菜单"
-            variant="flat"
-            selectionMode="single"
-            selectedKeys={[activeMenu]}
-            onSelectionChange={(keys) => {
-              const selected = Array.from(keys)[0] as MenuKey;
-              if (selected) setActiveMenu(selected);
-            }}
-          >
-            <ListboxSection title={isAdmin ? "超级管理员菜单" : "用户菜单"}>
-              {menuItems.map((item) => (
-                <ListboxItem
+          <div className="mb-2">
+            <p className="text-xs text-default-400 px-2 mb-2">管理员功能</p>
+            {menuItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <Button
                   key={item.key}
-                  startContent={<span className="text-xl">{item.icon}</span>}
+                  variant={activeMenu === item.key ? "flat" : "light"}
+                  color={activeMenu === item.key ? "primary" : "default"}
+                  className="w-full justify-start mb-1"
+                  startContent={<IconComponent size={20} />}
+                  onPress={() => setActiveMenu(item.key)}
                 >
                   {item.label}
-                </ListboxItem>
-              ))}
-            </ListboxSection>
-          </Listbox>
+                </Button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {renderContent()}
+        <main className="flex-1 p-6 overflow-auto">
+          <Card className="h-full" shadow="none">
+            <CardBody className="p-6 overflow-auto">
+              {renderContent()}
+            </CardBody>
+          </Card>
         </main>
       </div>
-
-      {/* Bind OpenClaw ID Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>绑定 OpenClaw ID</ModalHeader>
-          <ModalBody>
-            {error && (
-              <div className="p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg">
-                <p className="text-sm text-danger">{error}</p>
-              </div>
-            )}
-            
-            <Input
-              label="绑定 Token"
-              placeholder="请输入 OpenClaw 提供的绑定 Token"
-              value={openClawIdInput}
-              onChange={(e) => setOpenClawIdInput(e.target.value)}
-              description="绑定 Token 由 OpenClaw Agent 验证成功后提供"
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>
-              取消
-            </Button>
-            <Button color="primary" onPress={handleBindOpenClawId} isLoading={binding}>
-              绑定
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </div>
   );
 }
