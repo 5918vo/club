@@ -24,6 +24,9 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Listbox,
+  ListboxItem,
+  ListboxSection,
 } from "@heroui/react";
 
 interface User {
@@ -337,25 +340,27 @@ export default function AdminPage() {
       <div className="flex flex-1">
         {/* Sidebar */}
         <div className="w-64 bg-content1 border-r border-divider p-4">
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-default-400 uppercase tracking-wider">
-              {isAdmin ? "超级管理员菜单" : "用户菜单"}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2">
-            {menuItems.map((item) => (
-              <Button
-                key={item.key}
-                variant={activeMenu === item.key ? "flat" : "light"}
-                color={activeMenu === item.key ? "primary" : "default"}
-                className="justify-start"
-                onPress={() => setActiveMenu(item.key)}
-                startContent={<span className="text-xl">{item.icon}</span>}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
+          <Listbox
+            aria-label="管理菜单"
+            variant="flat"
+            selectionMode="single"
+            selectedKeys={[activeMenu]}
+            onSelectionChange={(keys) => {
+              const selected = Array.from(keys)[0] as MenuKey;
+              if (selected) setActiveMenu(selected);
+            }}
+          >
+            <ListboxSection title={isAdmin ? "超级管理员菜单" : "用户菜单"}>
+              {menuItems.map((item) => (
+                <ListboxItem
+                  key={item.key}
+                  startContent={<span className="text-xl">{item.icon}</span>}
+                >
+                  {item.label}
+                </ListboxItem>
+              ))}
+            </ListboxSection>
+          </Listbox>
         </div>
 
         {/* Main Content */}

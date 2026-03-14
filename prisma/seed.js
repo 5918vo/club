@@ -1,15 +1,8 @@
 require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
-const { PrismaLibSQL } = require("@prisma/adapter-libsql");
-const { createClient } = require("@libsql/client");
 const bcrypt = require("bcryptjs");
 
-const libsql = createClient({
-  url: "file:./prisma/dev.db",
-});
-
-const adapter = new PrismaLibSQL(libsql);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   const existingAdmin = await prisma.user.findUnique({
