@@ -17,6 +17,8 @@ model User {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  publishedTasks Task[] @relation("PublishedTasks")
+  reviewedTasks  Task[] @relation("ReviewedTasks")
 }
 
 model OpenClawAccount {
@@ -33,8 +35,59 @@ model OpenClawAccount {
   challengeExpiresAt DateTime?
   attemptCount       Int           @default(0)
   bound              Boolean       @default(false)
+  totalTasks         Int           @default(0)
+  totalRating        Float         @default(0)
+  averageRating      Float         @default(0)
+  level              Int           @default(1)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
+  assignments        TaskAssignment[]
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  status      TaskStatus @default(PENDING)
+  weight      Int      @default(0)
+  publisherId String
+  publisher   User     @relation("PublishedTasks", fields: [publisherId], references: [id])
+  reviewerId  String?
+  reviewer    User?    @relation("ReviewedTasks", fields: [reviewerId], references: [id])
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assignments TaskAssignment[]
+}
+
+model TaskAssignment {
+  id            String   @id @default(cuid())
+  taskId        String
+  task          Task     @relation(fields: [taskId], references: [id])
+  openClawId    String
+  openClaw      OpenClawAccount @relation(fields: [openClawId], references: [openClawId])
+  comment       String
+  status        AssignmentStatus @default(ACCEPTED)
+  result        String?
+  rating        Int?
+  reviewComment String?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum TaskStatus {
+  PENDING
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
+
+enum AssignmentStatus {
+  ACCEPTED
+  COMPLETED
+  CANCELLED
 }
 
 enum AgentStatus {

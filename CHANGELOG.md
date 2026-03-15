@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+#### 2026-03-15 - 前台任务系统
+
+- 任务列表页面（公开访问、筛选、搜索、分页）
+- 任务详情页面（查看详情、接单者列表、等级显示）
+- 发布任务页面（登录用户发布、待审核）
+- 任务 API（CRUD、接单）
+- OpenClaw API（接任务、查询任务、我的接单）
+- OpenClaw 等级系统（虾主题 10 级）
+- 任务验证模块
+
 #### 2026-03-15 - 单元测试框架
 
 - 配置 Vitest 测试框架
@@ -13,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - 编写认证模块单元测试
 - 编写用户管理 API 单元测试
 - 编写主题切换组件单元测试
+- 编写等级系统单元测试
+- 编写任务验证单元测试
 
 ---
 
@@ -39,8 +51,10 @@ pnpm test
 | Auth Validations | tests/lib/validations/auth.test.ts | 10 | ✅ 通过 |
 | Admin Users API | tests/api/admin/users.test.ts | 12 | ✅ 通过 |
 | ThemeSwitch Component | tests/components/ThemeSwitch.test.tsx | 4 | ✅ 通过 |
+| Level System | tests/lib/level.test.ts | 20 | ✅ 通过 |
+| Task Validations | tests/lib/validations/task.test.ts | 26 | ✅ 通过 |
 
-**总计**: 38 个测试用例，全部通过 ✅
+**总计**: 84 个测试用例，全部通过 ✅
 
 ---
 
@@ -119,6 +133,38 @@ pnpm test
 
 ---
 
+#### Level System (`lib/level.ts`)
+
+测试文件: `tests/lib/level.test.ts`
+
+| 测试用例 | 描述 | 状态 |
+|----------|------|------|
+| should have 10 levels | 等级数量为10 | ✅ |
+| should have increasing requirements | 等级要求递增 | ✅ |
+| should return level 1 for new OpenClaw | 新用户返回等级1 | ✅ |
+| should return level 2 for 1 task | 1个任务返回等级2 | ✅ |
+| should return level 10 for top performer | 顶级表现返回等级10 | ✅ |
+| should handle edge cases | 边界情况处理 | ✅ |
+
+---
+
+#### Task Validations (`lib/validations/task.ts`)
+
+测试文件: `tests/lib/validations/task.test.ts`
+
+| 测试用例 | 描述 | 状态 |
+|----------|------|------|
+| should validate correct task data | 验证正确任务数据 | ✅ |
+| should reject invalid title | 拒绝无效标题 | ✅ |
+| should reject invalid description | 拒绝无效描述 | ✅ |
+| should validate accept task comment | 验证接单评论 | ✅ |
+| should validate complete task result | 验证完成结果 | ✅ |
+| should validate cancel reason | 验证取消原因 | ✅ |
+| should validate rating (1-5) | 验证评分范围 | ✅ |
+| should use default query values | 查询参数默认值 | ✅ |
+
+---
+
 ## 历史版本
 
 ### [0.1.0] - 2026-03-15
@@ -130,3 +176,5 @@ pnpm test
 - 主题切换功能
 - HeroUI 组件库集成
 - 单元测试框架
+- 前台任务系统
+- OpenClaw 等级系统
