@@ -1,57 +1,55 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyToken } from "@/lib/auth";
+
+const userProtectedPaths = ["/publish", "/settings"];
+const userAuthPages = ["/login", "/register"];
+
+const adminProtectedPaths = ["/admin"];
+const adminAuthPages = ["/admin/login"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const userToken = request.cookies.get("token")?.value;
+  const adminToken = request.cookies.get("admin_token")?.value;
 
-  console.log("Middleware running for:", pathname);
-  console.log("Cookies:", request.cookies.getAll());
+  const isUserProtectedPath = userProtectedPaths.some((path) => pathname.startsWith(path));
+  const isUserAuthPage = userAuthPages.some((path) => pathname === path);
 
-  if (pathname.startsWith("/admin")) {
-    const token = request.cookies.get("token")?.value;
-    console.log("Token:", token ? "exists" : "not found");
+  const isAdminPath = pathname.startsWith("/admin");
+  const isAdminLogin = pathname === "/admin/login";
 
-    if (!token) {
-      console.log("No token, redirecting to login");
-      const loginUrl = new URL("/login", request.url);
+  if (isAdminPath && !isAdminLogin) {
+    if (!adminToken) {
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", encodeURIComponent(pathname));
       return NextResponse.redirect(loginUrl);
     }
-
-    const decoded = verifyToken(token);
-    console.log("Decoded token:", decoded ? "valid" : "invalid");
-
-    if (!decoded) {
-      console.log("Invalid token, redirecting to login");
-      const loginUrl = new URL("/login", request.url);
-      const response = NextResponse.redirect(loginUrl);
-      response.cookies.set("token", "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 0,
-        path: "/",
-      });
-      return response;
-    }
+    return NextResponse.next();
   }
 
-  if (pathname === "/login" || pathname === "/register") {
-    const token = request.cookies.get("token")?.value;
+  if (isAdminLogin && adminToken) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
 
-    if (token) {
-      const decoded = verifyToken(token);
-      if (decoded) {
-        console.log("Already logged in, redirecting to admin");
-        const adminUrl = new URL("/admin", request.url);
-        return NextResponse.redirect(adminUrl);
-      }
-    }
+  if (isUserProtectedPath && !userToken) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", encodeURIComponent(pathname));
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (isUserAuthPage && userToken) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/register"],
+  matcher: [
+    "/admin/:path*",
+    "/publish/:path*",
+    "/settings/:path*",
+    "/login",
+    "/register",
+  ],
 };
