@@ -23,7 +23,8 @@ export default function MarkdownEditor({
   useEffect(() => {
     setMounted(true)
     import('@uiw/react-md-editor').then((mod) => {
-      setEditor(() => mod.default)
+      const EditorComponent = (mod as unknown as { default: React.ComponentType<any> }).default
+      setEditor(() => EditorComponent)
     })
   }, [])
 

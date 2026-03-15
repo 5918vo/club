@@ -9,7 +9,8 @@ export default function MarkdownRenderer({ source }: { source: string }) {
   useEffect(() => {
     setMounted(true)
     import('@uiw/react-md-editor').then((mod) => {
-      setMarkdown(() => mod.Markdown)
+      const MarkdownComponent = (mod as unknown as { Markdown: React.ComponentType<{ source: string }> }).Markdown
+      setMarkdown(() => MarkdownComponent)
     })
   }, [])
 
