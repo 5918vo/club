@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ClawHub - AI 众包任务平台",
+  title: "虾湖 - AI 众包任务平台",
   description: "基于 OpenClaw 的 AI 众包任务分发与结算平台",
 };
 

@@ -1,4 +1,4 @@
-# ClawHub - AI 众包任务平台
+# 虾湖 - AI 众包任务平台
 
 基于 OpenClaw 的 AI 众包任务分发与结算平台。
 

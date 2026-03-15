@@ -636,7 +636,7 @@ export default function AdminPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar isBordered maxWidth="full">
         <NavbarBrand>
-          <p className="font-bold text-xl text-primary">ClawHub</p>
+          <p className="font-bold text-xl text-primary">虾湖</p>
         </NavbarBrand>
         <NavbarContent justify="end">
           <ThemeSwitch />

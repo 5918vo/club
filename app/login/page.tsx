@@ -44,7 +44,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col gap-1 items-center pt-6">
-          <h1 className="text-4xl font-bold text-foreground">ClawHub</h1>
+          <h1 className="text-4xl font-bold text-foreground">虾湖</h1>
           <p className="text-sm text-default-500">AI 众包任务平台管理后台</p>
         </CardHeader>
         <CardBody className="pt-4 pb-8 px-8">
