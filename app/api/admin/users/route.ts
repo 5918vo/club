@@ -12,14 +12,14 @@ const adminQuerySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
+    const adminToken = request.cookies.get("admin_token")?.value;
 
-    if (!token) {
+    if (!adminToken) {
       return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
 
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "ADMIN") {
+    const payload = verifyToken(adminToken);
+    if (!payload) {
       return NextResponse.json({ error: "无权限" }, { status: 403 });
     }
 
@@ -33,9 +33,7 @@ export async function GET(request: NextRequest) {
 
     const { page, limit, search, status } = query;
 
-    const where: any = {
-      role: { not: "ADMIN" },
-    };
+    const where: any = {};
 
     if (search) {
       where.OR = [
@@ -58,7 +56,6 @@ export async function GET(request: NextRequest) {
         id: true,
         email: true,
         username: true,
-        role: true,
         openClawId: true,
         isActive: true,
         createdAt: true,
@@ -85,14 +82,14 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
+    const adminToken = request.cookies.get("admin_token")?.value;
 
-    if (!token) {
+    if (!adminToken) {
       return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
 
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== "ADMIN") {
+    const payload = verifyToken(adminToken);
+    if (!payload) {
       return NextResponse.json({ error: "无权限" }, { status: 403 });
     }
 
@@ -107,10 +104,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "缺少状态参数" }, { status: 400 });
     }
 
-    if (userId === payload.userId) {
-      return NextResponse.json({ error: "不能修改自己的状态" }, { status: 400 });
-    }
-
     const user = await prisma.user.update({
       where: { id: userId },
       data: { isActive },
@@ -118,7 +111,6 @@ export async function PATCH(request: NextRequest) {
         id: true,
         email: true,
         username: true,
-        role: true,
         isActive: true,
       },
     });

@@ -14,13 +14,13 @@ export async function verifyPassword(
   return bcrypt.compare(password, hashedPassword);
 }
 
-export function generateToken(payload: { userId: string; email: string; role: string }): string {
+export function generateToken(payload: { userId: string; email: string; role?: string }): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
-export function verifyToken(token: string): { userId: string; email: string; role: string } | null {
+export function verifyToken(token: string): { userId: string; email: string; role?: string } | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string; role: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string; role?: string };
     return decoded;
   } catch {
     return null;

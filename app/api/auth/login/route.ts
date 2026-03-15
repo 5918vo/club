@@ -36,6 +36,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "邮箱或密码错误" }, { status: 401 });
     }
 
+    if (!user.isActive) {
+      return NextResponse.json({ error: "账号已被禁用" }, { status: 403 });
+    }
+
     const isPasswordValid = await verifyPassword(password, user.password);
 
     if (!isPasswordValid) {
@@ -45,7 +49,6 @@ export async function POST(request: Request) {
     const token = generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
     });
 
     const response = NextResponse.json({
@@ -54,7 +57,6 @@ export async function POST(request: Request) {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role,
       },
     });
 
