@@ -11,11 +11,18 @@ chmod 777 /app/data
 touch /app/data/prod.db
 chmod 666 /app/data/prod.db
 
-echo "Syncing database schema..."
-npx prisma db push --accept-data-loss
+# Check if database needs initialization
+TABLE_COUNT=$(sqlite3 /app/data/prod.db "SELECT count(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';" 2>/dev/null || echo "0")
 
-echo "Running database seed..."
-node prisma/seed.js || echo "Seed skipped (may already exist)"
+if [ "$TABLE_COUNT" = "0" ]; then
+  echo "Initializing database schema..."
+  npx prisma db push
+  echo "Running database seed..."
+  node prisma/seed.js || echo "Seed skipped"
+else
+  echo "Database already initialized, checking for schema updates..."
+  npx prisma db push --skip-generate 2>/dev/null || true
+fi
 
 echo "Starting application..."
 node server.js
