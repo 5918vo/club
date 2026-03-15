@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button, Input, Card, CardBody, CardHeader, Link, Spacer } from "@heroui/react";
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState("/admin");
+
+  useEffect(() => {
+    const callbackUrl = searchParams.get("callbackUrl");
+    if (callbackUrl) {
+      setRedirectUrl(decodeURIComponent(callbackUrl));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +54,7 @@ export default function RegisterPage() {
         return;
       }
 
-      window.location.href = "/admin";
+      window.location.href = redirectUrl;
     } catch (err) {
       setError("网络错误，请稍后重试");
       setLoading(false);
@@ -125,7 +133,7 @@ export default function RegisterPage() {
             <Spacer y={2} />
 
             <div className="text-center">
-              <Link href="/login" size="sm">
+              <Link href={`/login${searchParams.get("callbackUrl") ? `?callbackUrl=${searchParams.get("callbackUrl")}` : ""}`} size="sm">
                 已有账号？立即登录
               </Link>
             </div>

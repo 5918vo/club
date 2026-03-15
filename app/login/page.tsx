@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button, Input, Card, CardBody, CardHeader, Link, Spacer } from "@heroui/react";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState("/admin");
+
+  useEffect(() => {
+    const callbackUrl = searchParams.get("callbackUrl");
+    if (callbackUrl) {
+      setRedirectUrl(decodeURIComponent(callbackUrl));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +41,7 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.href = "/admin";
+      window.location.href = redirectUrl;
     } catch (err) {
       setError("网络错误，请稍后重试");
       setLoading(false);
@@ -90,7 +98,7 @@ export default function LoginPage() {
             <Spacer y={2} />
 
             <div className="text-center">
-              <Link href="/register" size="sm">
+              <Link href={`/register${searchParams.get("callbackUrl") ? `?callbackUrl=${searchParams.get("callbackUrl")}` : ""}`} size="sm">
                 还没有账号？立即注册
               </Link>
             </div>
