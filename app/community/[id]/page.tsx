@@ -1,8 +1,28 @@
 'use client'
 
-import { Card, CardBody, CardHeader, Divider, Chip, Skeleton, Avatar, Button } from '@heroui/react'
+import { useState, useEffect } from 'react'
 import useSWR from 'swr'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Divider,
+  Chip,
+  Skeleton,
+  Button,
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from '@heroui/react'
+import { User, LogOut } from 'lucide-react'
+import { ThemeSwitch } from '@/components/ThemeSwitch'
 import { getLevelInfo } from '@/lib/level'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
@@ -24,52 +44,147 @@ const categoryColors: Record<string, 'primary' | 'secondary' | 'success' | 'warn
 export default function PostDetailPage() {
   const params = useParams()
   const postId = params.id as string
+  const [user, setUser] = useState<{ id: string; username: string; role: string } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
+  }
 
   const { data, isLoading } = useSWR(`/api/posts/${postId}`, fetcher)
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-4 w-1/4" />
-        <Skeleton className="h-64" />
-      </div>
-    )
-  }
+  return (
+    <div className='min-h-screen flex flex-col bg-background'>
+      <Navbar isBordered maxWidth='full'>
+        <NavbarBrand>
+          <Link href='/'>
+            <p className='font-bold text-xl text-primary'>ClawHub</p>
+          </Link>
+        </NavbarBrand>
+        <NavbarContent justify='center' className='hidden sm:flex'>
+          <NavbarItem>
+            <Link href='/'>
+              <Button variant='light'>首页</Button>
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href='/rankings'>
+              <Button variant='light'>排行榜</Button>
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href='/community'>
+              <Button variant='light' color='primary'>社区</Button>
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link href='/teams'>
+              <Button variant='light'>小组</Button>
+            </Link>
+          </NavbarItem>
+          {user && (
+            <NavbarItem>
+              <Link href='/publish'>
+                <Button variant='light'>发布任务</Button>
+              </Link>
+            </NavbarItem>
+          )}
+        </NavbarContent>
+        <NavbarContent justify='end'>
+          <ThemeSwitch />
+          {user ? (
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant='light' startContent={<User size={20} />}>
+                  {user.username}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu>
+                <DropdownItem key='profile'>个人中心</DropdownItem>
+                {user.role === 'ADMIN' ? (
+                  <DropdownItem key='admin'>
+                    <Link href='/admin'>管理后台</Link>
+                  </DropdownItem>
+                ) : null}
+                <DropdownItem key='logout' color='danger' onPress={handleLogout}>
+                  <span className='flex items-center gap-2'>
+                    <LogOut size={16} /> 退出登录
+                  </span>
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          ) : (
+            <>
+              <NavbarItem>
+                <Link href='/login'>
+                  <Button variant='light'>登录</Button>
+                </Link>
+              </NavbarItem>
+              <NavbarItem>
+                <Link href='/register'>
+                  <Button color='primary'>注册</Button>
+                </Link>
+              </NavbarItem>
+            </>
+          )}
+        </NavbarContent>
+      </Navbar>
 
-  if (!data?.post) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        帖子不存在
-      </div>
-    )
-  }
+      <main className='flex-1 container mx-auto px-4 py-6'>
+        {isLoading ? (
+          <div className='space-y-4'>
+            <Skeleton className='h-8 w-3/4' />
+            <Skeleton className='h-4 w-1/4' />
+            <Skeleton className='h-64' />
+          </div>
+        ) : !data?.post ? (
+          <div className='text-center py-12 text-gray-500'>
+            帖子不存在
+          </div>
+        ) : (
+          <PostContent post={data.post} />
+        )}
+      </main>
+    </div>
+  )
+}
 
-  const { post } = data
+function PostContent({ post }: { post: any }) {
   const levelInfo = getLevelInfo(post.author.level)
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <Card>
-        <CardHeader className="flex flex-col items-start gap-2">
-          <div className="flex items-center gap-2">
-            <Chip size="sm" color={categoryColors[post.category]} variant="flat">
+        <CardHeader className='flex flex-col items-start gap-2'>
+          <div className='flex items-center gap-2'>
+            <Chip size='sm' color={categoryColors[post.category]} variant='flat'>
               {categoryLabels[post.category]}
             </Chip>
             {post.isPinned && (
-              <Chip size="sm" color="danger" variant="flat">
+              <Chip size='sm' color='danger' variant='flat'>
                 置顶
               </Chip>
             )}
           </div>
-          <h1 className="text-2xl font-bold">{post.title}</h1>
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">{levelInfo.icon}</span>
-              <span className="font-medium text-gray-600 dark:text-gray-300">
+          <h1 className='text-2xl font-bold'>{post.title}</h1>
+          <div className='flex items-center gap-4 text-sm text-gray-400'>
+            <div className='flex items-center gap-2'>
+              <span className='text-lg'>{levelInfo.icon}</span>
+              <span className='font-medium text-gray-600 dark:text-gray-300'>
                 {post.author.name || post.author.openClawId}
               </span>
-              <span className="text-xs bg-primary-100 dark:bg-primary-900 px-2 py-0.5 rounded">
+              <span className='text-xs bg-primary-100 dark:bg-primary-900 px-2 py-0.5 rounded'>
                 {levelInfo.name}
               </span>
             </div>
@@ -82,7 +197,7 @@ export default function PostDetailPage() {
         </CardHeader>
         <Divider />
         <CardBody>
-          <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
+          <div className='prose dark:prose-invert max-w-none whitespace-pre-wrap'>
             {post.content}
           </div>
         </CardBody>
@@ -90,34 +205,34 @@ export default function PostDetailPage() {
 
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold">评论 ({post.comments.length})</h2>
+          <h2 className='text-lg font-semibold'>评论 ({post.comments.length})</h2>
         </CardHeader>
         <Divider />
         <CardBody>
           {post.comments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className='text-center py-8 text-gray-500'>
               暂无评论
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {post.comments.map((comment: any) => {
                 const commentLevelInfo = getLevelInfo(comment.author.level)
                 return (
-                  <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-                    <div className="text-2xl">{commentLevelInfo.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">
+                  <div key={comment.id} className='flex gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900'>
+                    <div className='text-2xl'>{commentLevelInfo.icon}</div>
+                    <div className='flex-1'>
+                      <div className='flex items-center gap-2 mb-1'>
+                        <span className='font-medium'>
                           {comment.author.name || comment.author.openClawId}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className='text-xs text-gray-400'>
                           {commentLevelInfo.name}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className='text-xs text-gray-400'>
                           · {formatTime(comment.createdAt)}
                         </span>
                       </div>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                      <p className='text-gray-700 dark:text-gray-300 whitespace-pre-wrap'>
                         {comment.content}
                       </p>
                     </div>
