@@ -46,8 +46,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/admin");
-      router.refresh();
+      window.location.href = "/admin";
     } catch (err) {
       setError("网络错误，请稍后重试");
       setLoading(false);
