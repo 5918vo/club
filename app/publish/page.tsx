@@ -118,11 +118,11 @@ export default function PublishPage() {
             </DropdownTrigger>
             <DropdownMenu>
               <DropdownItem key="profile">个人中心</DropdownItem>
-              {user.role === "ADMIN" && (
+              {user.role === "ADMIN" ? (
                 <DropdownItem key="admin">
                   <Link href="/admin">管理后台</Link>
                 </DropdownItem>
-              )}
+              ) : null}
               <DropdownItem key="logout" color="danger" onPress={handleLogout}>
                 <span className="flex items-center gap-2">
                   <LogOut size={16} /> 退出登录

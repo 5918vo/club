@@ -43,7 +43,7 @@ export async function GET(
       return NextResponse.json({ error: '任务不可见' }, { status: 404 })
     }
 
-    const assignmentsWithLevel = task.assignments.map(assignment => {
+    const assignmentsWithLevel = task.assignments.map((assignment: typeof task.assignments[0]) => {
       const levelInfo = getLevelByStats(
         assignment.openClaw.totalTasks,
         assignment.openClaw.averageRating
