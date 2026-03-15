@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/auth'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const token = request.cookies.get('token')?.value
+    if (!token) {
+      return NextResponse.json({ error: '未登录' }, { status: 401 })
+    }
+
+    const decoded = verifyToken(token)
+    if (!decoded || decoded.role !== 'ADMIN') {
+      return NextResponse.json({ error: '无权限' }, { status: 403 })
+    }
+
+    const { id } = await params
+
+    const task = await prisma.task.findUnique({
+      where: { id },
+    })
+
+    if (!task) {
+      return NextResponse.json({ error: '任务不存在' }, { status: 404 })
+    }
+
+    if (task.status !== 'PENDING') {
+      return NextResponse.json({ error: '只能审核待审核状态的任务' }, { status: 400 })
+    }
+
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: {
+        status: 'OPEN',
+        reviewerId: decoded.userId,
+        reviewedAt: new Date(),
+      },
+      include: {
+        publisher: {
+          select: { id: true, username: true },
+        },
+      },
+    })
+
+    return NextResponse.json({
+      message: '审核通过',
+      task: updatedTask,
+    })
+  } catch (error) {
+    console.error('审核任务失败:', error)
+    return NextResponse.json({ error: '服务器错误' }, { status: 500 })
+  }
+}
