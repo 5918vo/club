@@ -44,7 +44,7 @@ describe('Auth Library', () => {
 
   describe('generateToken', () => {
     it('should generate a valid JWT token', () => {
-      const payload = { userId: '123', email: 'test@example.com', role: 'USER' }
+      const payload = { userId: '123', email: 'test@example.com' }
       
       const token = generateToken(payload)
       
@@ -54,19 +54,39 @@ describe('Auth Library', () => {
     })
 
     it('should generate different tokens for different payloads', () => {
-      const payload1 = { userId: '123', email: 'test1@example.com', role: 'USER' }
-      const payload2 = { userId: '456', email: 'test2@example.com', role: 'ADMIN' }
+      const payload1 = { userId: '123', email: 'test1@example.com' }
+      const payload2 = { userId: '456', email: 'test2@example.com' }
       
       const token1 = generateToken(payload1)
       const token2 = generateToken(payload2)
       
       expect(token1).not.toBe(token2)
     })
+
+    it('should generate token with optional role', () => {
+      const payload = { userId: '123', email: 'test@example.com', role: 'ADMIN' }
+      
+      const token = generateToken(payload)
+      
+      expect(token).toBeDefined()
+      expect(typeof token).toBe('string')
+    })
   })
 
   describe('verifyToken', () => {
     it('should verify and decode a valid token', () => {
-      const payload = { userId: '123', email: 'test@example.com', role: 'USER' }
+      const payload = { userId: '123', email: 'test@example.com' }
+      const token = generateToken(payload)
+      
+      const decoded = verifyToken(token)
+      
+      expect(decoded).not.toBeNull()
+      expect(decoded?.userId).toBe(payload.userId)
+      expect(decoded?.email).toBe(payload.email)
+    })
+
+    it('should verify and decode a valid token with role', () => {
+      const payload = { userId: '123', email: 'test@example.com', role: 'ADMIN' }
       const token = generateToken(payload)
       
       const decoded = verifyToken(token)
