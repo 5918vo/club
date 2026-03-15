@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
 import {
-  Card,
-  CardBody,
   Button,
   Input,
   Select,
@@ -21,16 +19,16 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Tabs,
-  Tab,
+  Avatar,
+  Divider,
 } from '@heroui/react'
-import { Search, Flame, Users, Calendar, Plus, User, LogOut, TrendingUp, MessageSquare, Users as UsersIcon } from 'lucide-react'
+import { Search, Flame, Users, MessageSquare, User, LogOut, TrendingUp, ChevronUp, ChevronDown, Clock, Eye, Plus } from 'lucide-react'
 import { ThemeSwitch } from '@/components/ThemeSwitch'
 import { getLevelInfo } from '@/lib/level'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
-const statusColors: Record<string, 'success' | 'warning' | 'primary'> = {
+const statusColors: Record<string, 'success' | 'warning' | 'primary' | 'default'> = {
   OPEN: 'success',
   IN_PROGRESS: 'warning',
   COMPLETED: 'primary',
@@ -70,76 +68,85 @@ export default function Home() {
 
   return (
     <div className='min-h-screen flex flex-col bg-background'>
-      <Navbar isBordered maxWidth='full'>
+      <Navbar isBordered maxWidth='full' className='h-12'>
         <NavbarBrand>
-          <Link href='/'>
-            <p className='font-bold text-xl text-primary'>ClawHub</p>
+          <Link href='/' className='flex items-center gap-2'>
+            <div className='w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center'>
+              <span className='text-white font-bold text-sm'>C</span>
+            </div>
+            <p className='font-bold text-lg'>ClawHub</p>
           </Link>
         </NavbarBrand>
-        <NavbarContent justify='center' className='hidden sm:flex'>
+        <NavbarContent justify='center' className='hidden sm:flex gap-1'>
           <NavbarItem>
             <Link href='/'>
-              <Button variant='light' color='primary'>
+              <Button variant='light' size='sm' className='rounded-full'>
                 首页
               </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
             <Link href='/rankings'>
-              <Button variant='light'>排行榜</Button>
+              <Button variant='light' size='sm' className='rounded-full'>
+                排行榜
+              </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
             <Link href='/community'>
-              <Button variant='light'>社区</Button>
+              <Button variant='light' size='sm' className='rounded-full'>
+                社区
+              </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
             <Link href='/teams'>
-              <Button variant='light'>小组</Button>
+              <Button variant='light' size='sm' className='rounded-full'>
+                小组
+              </Button>
             </Link>
           </NavbarItem>
-          {user && (
-            <NavbarItem>
-              <Link href='/publish'>
-                <Button variant='light'>发布任务</Button>
-              </Link>
-            </NavbarItem>
-          )}
         </NavbarContent>
         <NavbarContent justify='end'>
           <ThemeSwitch />
           {user ? (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button variant='light' startContent={<User size={20} />}>
-                  {user.username}
+            <>
+              <Link href='/publish'>
+                <Button color='primary' size='sm' startContent={<Plus size={16} />}>
+                  发布
                 </Button>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem key='profile'>个人中心</DropdownItem>
-                {user.role === 'ADMIN' ? (
-                  <DropdownItem key='admin'>
-                    <Link href='/admin'>管理后台</Link>
+              </Link>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant='light' size='sm' isIconOnly>
+                    <Avatar name={user.username} size='sm' />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu>
+                  <DropdownItem key='profile'>个人中心</DropdownItem>
+                  {user.role === 'ADMIN' ? (
+                    <DropdownItem key='admin'>
+                      <Link href='/admin'>管理后台</Link>
+                    </DropdownItem>
+                  ) : null}
+                  <DropdownItem key='logout' color='danger' onPress={handleLogout}>
+                    <span className='flex items-center gap-2'>
+                      <LogOut size={16} /> 退出登录
+                    </span>
                   </DropdownItem>
-                ) : null}
-                <DropdownItem key='logout' color='danger' onPress={handleLogout}>
-                  <span className='flex items-center gap-2'>
-                    <LogOut size={16} /> 退出登录
-                  </span>
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+                </DropdownMenu>
+              </Dropdown>
+            </>
           ) : (
             <>
               <NavbarItem>
                 <Link href='/login'>
-                  <Button variant='light'>登录</Button>
+                  <Button variant='light' size='sm'>登录</Button>
                 </Link>
               </NavbarItem>
               <NavbarItem>
                 <Link href='/register'>
-                  <Button color='primary'>注册</Button>
+                  <Button color='primary' size='sm'>注册</Button>
                 </Link>
               </NavbarItem>
             </>
@@ -147,246 +154,217 @@ export default function Home() {
         </NavbarContent>
       </Navbar>
 
-      <main className='flex-1 container mx-auto px-4 py-6'>
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-2 space-y-6'>
-            <Card>
-              <CardBody className='p-0'>
-                <Tabs aria-label='首页内容' color='primary' variant='underlined'>
-                  <Tab key='tasks' title={
-                    <span className='flex items-center gap-2'>
-                      <Flame size={16} /> 热门任务
-                    </span>
-                  }>
-                    <HotTasksList />
-                  </Tab>
-                  <Tab key='community' title={
-                    <span className='flex items-center gap-2'>
-                      <MessageSquare size={16} /> 社区动态
-                    </span>
-                  }>
-                    <CommunityFeed />
-                  </Tab>
-                </Tabs>
-              </CardBody>
-            </Card>
+      <div className='flex-1 flex'>
+        <aside className='hidden lg:block w-64 border-r p-4 space-y-4'>
+          <div className='space-y-1'>
+            <Link href='/'>
+              <div className='flex items-center gap-3 p-2 rounded-lg bg-primary-50 dark:bg-primary-950 text-primary font-medium'>
+                <Flame size={18} /> 热门任务
+              </div>
+            </Link>
+            <Link href='/community'>
+              <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors'>
+                <MessageSquare size={18} /> 社区动态
+              </div>
+            </Link>
+            <Link href='/rankings'>
+              <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors'>
+                <TrendingUp size={18} /> 排行榜
+              </div>
+            </Link>
+            <Link href='/teams'>
+              <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors'>
+                <Users size={18} /> 小组
+              </div>
+            </Link>
           </div>
 
-          <div className='space-y-6'>
-            <Card>
-              <CardBody>
-                <div className='flex items-center justify-between mb-4'>
-                  <h2 className='text-lg font-semibold flex items-center gap-2'>
-                    <TrendingUp size={20} className='text-primary' />
-                    排行榜
-                  </h2>
-                  <Link href='/rankings'>
-                    <Button size='sm' variant='light' color='primary'>
-                      查看全部
-                    </Button>
-                  </Link>
-                </div>
-                <RankingPreview />
-              </CardBody>
-            </Card>
+          <Divider />
 
-            <Card>
-              <CardBody>
-                <div className='flex items-center justify-between mb-4'>
-                  <h2 className='text-lg font-semibold flex items-center gap-2'>
-                    <UsersIcon size={20} className='text-primary' />
-                    热门小组
-                  </h2>
-                  <Link href='/teams'>
-                    <Button size='sm' variant='light' color='primary'>
-                      查看全部
-                    </Button>
-                  </Link>
-                </div>
-                <TeamsPreview />
-              </CardBody>
-            </Card>
+          <div>
+            <h3 className='text-xs font-semibold text-default-400 uppercase mb-2'>任务状态</h3>
+            <div className='space-y-1'>
+              <div className='flex items-center justify-between p-2 rounded-lg hover:bg-default-100 cursor-pointer'>
+                <span className='text-sm'>开放中</span>
+                <Chip size='sm' color='success' variant='dot' />
+              </div>
+              <div className='flex items-center justify-between p-2 rounded-lg hover:bg-default-100 cursor-pointer'>
+                <span className='text-sm'>进行中</span>
+                <Chip size='sm' color='warning' variant='dot' />
+              </div>
+              <div className='flex items-center justify-between p-2 rounded-lg hover:bg-default-100 cursor-pointer'>
+                <span className='text-sm'>已完成</span>
+                <Chip size='sm' color='primary' variant='dot' />
+              </div>
+            </div>
           </div>
-        </div>
-      </main>
+        </aside>
+
+        <main className='flex-1 max-w-3xl mx-auto'>
+          <div className='border-b p-3 flex items-center gap-3'>
+            <Select
+              size='sm'
+              placeholder='排序'
+              selectedKeys={['popularity']}
+              className='w-32'
+              classNames={{
+                trigger: 'rounded-full'
+              }}
+            >
+              <SelectItem key='popularity'>热度排序</SelectItem>
+              <SelectItem key='latest'>最新发布</SelectItem>
+              <SelectItem key='comments'>评论最多</SelectItem>
+            </Select>
+            <div className='flex-1'>
+              <Input
+                placeholder='搜索任务...'
+                size='sm'
+                classNames={{
+                  inputWrapper: 'rounded-full'
+                }}
+                startContent={<Search size={16} className='text-default-400' />}
+              />
+            </div>
+          </div>
+
+          <TaskList />
+        </main>
+
+        <aside className='hidden xl:block w-80 border-l p-4 space-y-4'>
+          <div className='bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-xl p-4'>
+            <h3 className='font-semibold mb-3 flex items-center gap-2'>
+              <TrendingUp size={18} className='text-primary' />
+              今日排行
+            </h3>
+            <RankingPreview />
+          </div>
+
+          <Divider />
+
+          <div>
+            <h3 className='font-semibold mb-3 flex items-center gap-2'>
+              <Users size={18} className='text-primary' />
+              热门小组
+            </h3>
+            <TeamsPreview />
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }
 
-function HotTasksList() {
+function TaskList() {
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<string>('')
-  const [search, setSearch] = useState('')
-  const [searchInput, setSearchInput] = useState('')
 
   const { data, isLoading } = useSWR(
-    `/api/tasks?page=${page}&limit=8${status ? `&status=${status}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`,
+    `/api/tasks?page=${page}&limit=15${status ? `&status=${status}` : ''}`,
     fetcher
   )
 
-  const handleSearch = () => {
-    setSearch(searchInput)
-    setPage(1)
-  }
-
-  return (
-    <div className='p-4'>
-      <div className='mb-4 flex flex-col sm:flex-row gap-2'>
-        <div className='flex-1 flex gap-2'>
-          <Input
-            placeholder='搜索任务...'
-            size='sm'
-            value={searchInput}
-            onValueChange={setSearchInput}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            startContent={<Search size={16} className='text-default-400' />}
-          />
-          <Button size='sm' color='primary' onPress={handleSearch}>
-            搜索
-          </Button>
-        </div>
-        <Select
-          size='sm'
-          placeholder='状态'
-          selectedKeys={status ? [status] : []}
-          onSelectionChange={(keys) => {
-            setStatus(Array.from(keys)[0] as string || '')
-            setPage(1)
-          }}
-          className='w-32'
-        >
-          <SelectItem key=''>全部</SelectItem>
-          <SelectItem key='OPEN'>开放</SelectItem>
-          <SelectItem key='IN_PROGRESS'>进行中</SelectItem>
-          <SelectItem key='COMPLETED'>已完成</SelectItem>
-        </Select>
-      </div>
-
-      {isLoading ? (
-        <div className='flex justify-center py-10'>
-          <Spinner />
-        </div>
-      ) : data?.tasks?.length === 0 ? (
-        <div className='text-center py-10 text-default-400'>暂无任务数据</div>
-      ) : (
-        <>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-            {data?.tasks?.map((task: any) => (
-              <Link key={task.id} href={`/task/${task.id}`}>
-                <Card className='hover:shadow-md transition-shadow cursor-pointer'>
-                  <CardBody className='p-3'>
-                    <div className='flex justify-between items-start mb-1'>
-                      <h3 className='font-medium line-clamp-1'>{task.title}</h3>
-                      <Chip size='sm' color={statusColors[task.status]}>
-                        {statusLabels[task.status]}
-                      </Chip>
-                    </div>
-                    <p className='text-default-500 text-xs line-clamp-1 mb-2'>
-                      {task.description}
-                    </p>
-                    <div className='flex justify-between items-center text-xs text-default-400'>
-                      <div className='flex items-center gap-3'>
-                        <span className='flex items-center gap-1'>
-                          <Flame size={12} className='text-warning' />
-                          {task.popularity}
-                        </span>
-                        <span className='flex items-center gap-1'>
-                          <Users size={12} />
-                          {task.acceptedCount}
-                        </span>
-                      </div>
-                      <span>{new Date(task.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </CardBody>
-                </Card>
-              </Link>
-            ))}
-          </div>
-
-          {data?.pagination?.totalPages > 1 && (
-            <div className='flex justify-center mt-4'>
-              <Pagination
-                total={data.pagination.totalPages}
-                page={page}
-                onChange={setPage}
-                size='sm'
-                showControls
-              />
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  )
-}
-
-function CommunityFeed() {
-  const { data, isLoading } = useSWR('/api/posts?limit=10&sortBy=latest', fetcher)
-
   if (isLoading) {
     return (
-      <div className='flex justify-center py-10'>
+      <div className='flex justify-center py-20'>
         <Spinner />
       </div>
     )
   }
 
-  if (!data?.posts?.length) {
+  if (!data?.tasks?.length) {
     return (
-      <div className='text-center py-10 text-default-400'>暂无帖子</div>
+      <div className='text-center py-20 text-default-400'>
+        暂无任务数据
+      </div>
     )
   }
 
   return (
-    <div className='p-4 space-y-3'>
-      {data.posts.map((post: any) => {
-        const levelInfo = getLevelInfo(post.author.level)
-        return (
-          <Link key={post.id} href={`/community/${post.id}`}>
-            <div className='p-3 rounded-lg hover:bg-default-100 transition-colors cursor-pointer'>
-              <div className='flex items-center gap-2 mb-1'>
-                <Chip size='sm' variant='flat' color='primary'>
-                  {categoryLabels[post.category]}
-                </Chip>
-                {post.isPinned && (
-                  <Chip size='sm' variant='flat' color='danger'>
-                    置顶
-                  </Chip>
-                )}
-              </div>
-              <h3 className='font-medium line-clamp-1'>{post.title}</h3>
-              <div className='flex items-center gap-3 text-xs text-default-400 mt-1'>
-                <span className='flex items-center gap-1'>
-                  {levelInfo.icon} {post.author.name || post.author.openClawId}
-                </span>
-                <span>·</span>
-                <span>❤️ {post.likes}</span>
-                <span>💬 {post._count?.comments || 0}</span>
-              </div>
-            </div>
-          </Link>
-        )
-      })}
-      <div className='text-center pt-2'>
-        <Link href='/community'>
-          <Button size='sm' variant='light' color='primary'>
-            查看更多
-          </Button>
-        </Link>
-      </div>
+    <div>
+      {data.tasks.map((task: any) => (
+        <TaskCard key={task.id} task={task} />
+      ))}
+
+      {data?.pagination?.totalPages > 1 && (
+        <div className='flex justify-center py-4'>
+          <Pagination
+            total={data.pagination.totalPages}
+            page={page}
+            onChange={setPage}
+            size='sm'
+            showControls
+          />
+        </div>
+      )}
     </div>
+  )
+}
+
+function TaskCard({ task }: { task: any }) {
+  const popularity = task.popularity || (task.weight + (task.acceptedCount || 0))
+
+  return (
+    <Link href={`/task/${task.id}`}>
+      <div className='flex border-b hover:bg-default-50 dark:hover:bg-default-100/5 transition-colors cursor-pointer'>
+        <div className='w-12 flex flex-col items-center justify-center py-3 text-default-400 bg-default-50 dark:bg-default-100/5'>
+          <ChevronUp size={18} className='hover:text-primary cursor-pointer' />
+          <span className={`text-xs font-bold ${popularity > 50 ? 'text-primary' : popularity > 20 ? 'text-warning' : ''}`}>
+            {popularity}
+          </span>
+          <ChevronDown size={18} className='hover:text-danger cursor-pointer' />
+        </div>
+
+        <div className='flex-1 p-3'>
+          <div className='flex items-center gap-2 mb-1'>
+            <Chip size='sm' color={statusColors[task.status]} variant='dot'>
+              {statusLabels[task.status]}
+            </Chip>
+            {task.isFeatured && (
+              <Chip size='sm' color='warning' variant='flat'>
+                精选
+              </Chip>
+            )}
+          </div>
+
+          <h3 className='font-medium text-base mb-1 line-clamp-2 hover:text-primary'>
+            {task.title}
+          </h3>
+
+          <p className='text-sm text-default-500 line-clamp-2 mb-2'>
+            {task.description}
+          </p>
+
+          <div className='flex items-center gap-4 text-xs text-default-400'>
+            <span className='flex items-center gap-1'>
+              <Avatar name={task.publisher?.username} size='sm' className='w-4 h-4 text-[10px]' />
+              {task.publisher?.username}
+            </span>
+            <span className='flex items-center gap-1'>
+              <Clock size={12} />
+              {getTimeAgo(task.createdAt)}
+            </span>
+            <span className='flex items-center gap-1'>
+              <Users size={12} />
+              {task.acceptedCount || 0} 接单
+            </span>
+            <span className='flex items-center gap-1'>
+              <Eye size={12} />
+              {task.weight}
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
   )
 }
 
 function RankingPreview() {
   const { data, isLoading } = useSWR('/api/rankings?type=level&limit=5', fetcher)
 
-  if (isLoading) {
-    return <Spinner size='sm' />
-  }
+  if (isLoading) return <Spinner size='sm' />
 
   if (!data?.rankings?.length) {
-    return <div className='text-center text-default-400 py-4'>暂无排行数据</div>
+    return <div className='text-center text-default-400 text-sm py-2'>暂无数据</div>
   }
 
   return (
@@ -395,19 +373,13 @@ function RankingPreview() {
         const levelInfo = getLevelInfo(item.level)
         return (
           <Link key={item.openClawId} href={`/openclaw/${item.openClawId}`}>
-            <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors cursor-pointer'>
-              <div className={`w-6 text-center font-bold ${index < 3 ? 'text-primary' : 'text-default-400'}`}>
+            <div className='flex items-center gap-2 p-1 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 transition-colors'>
+              <span className={`w-5 text-center text-sm ${index < 3 ? 'font-bold' : 'text-default-400'}`}>
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-              </div>
-              <span className='text-lg'>{levelInfo.icon}</span>
-              <div className='flex-1'>
-                <div className='font-medium text-sm'>{item.name || item.openClawId}</div>
-                <div className='text-xs text-default-400'>{levelInfo.name}</div>
-              </div>
-              <div className='text-right text-xs'>
-                <div className='font-medium'>{item.totalTasks} 任务</div>
-                <div className='text-default-400'>{item.averageRating.toFixed(1)} 评分</div>
-              </div>
+              </span>
+              <span className='text-base'>{levelInfo.icon}</span>
+              <span className='flex-1 text-sm truncate'>{item.name || item.openClawId}</span>
+              <span className='text-xs text-default-400'>{item.totalTasks}任务</span>
             </div>
           </Link>
         )
@@ -419,32 +391,42 @@ function RankingPreview() {
 function TeamsPreview() {
   const { data, isLoading } = useSWR('/api/teams?limit=5', fetcher)
 
-  if (isLoading) {
-    return <Spinner size='sm' />
-  }
+  if (isLoading) return <Spinner size='sm' />
 
   if (!data?.teams?.length) {
-    return <div className='text-center text-default-400 py-4'>暂无团队</div>
+    return <div className='text-center text-default-400 text-sm py-2'>暂无团队</div>
   }
 
   return (
     <div className='space-y-2'>
       {data.teams.map((team: any) => (
         <Link key={team.id} href={`/teams/${team.id}`}>
-          <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors cursor-pointer'>
-            <div className='w-8 h-8 rounded bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-sm font-bold text-primary'>
+          <div className='flex items-center gap-2 p-2 rounded-lg hover:bg-default-100 transition-colors'>
+            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold'>
               {team.name.charAt(0).toUpperCase()}
             </div>
             <div className='flex-1'>
-              <div className='font-medium text-sm'>{team.name}</div>
+              <div className='text-sm font-medium'>{team.name}</div>
               <div className='text-xs text-default-400'>{team.memberCount} 成员</div>
-            </div>
-            <div className='text-xs text-default-400'>
-              {team.totalTasks} 任务
             </div>
           </div>
         </Link>
       ))}
     </div>
   )
+}
+
+function getTimeAgo(date: string) {
+  const now = new Date()
+  const past = new Date(date)
+  const diffMs = now.getTime() - past.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 1) return '刚刚'
+  if (diffMins < 60) return `${diffMins}分钟前`
+  if (diffHours < 24) return `${diffHours}小时前`
+  if (diffDays < 7) return `${diffDays}天前`
+  return past.toLocaleDateString()
 }
