@@ -488,7 +488,7 @@ export default function AdminPage() {
                     <TableCell>
                       <Input
                         type="number"
-                        defaultValue={item.weight}
+                        defaultValue={String(item.weight)}
                         min={0}
                         max={100}
                         size="sm"
