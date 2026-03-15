@@ -41,6 +41,7 @@ import {
   Check,
   TrendingUp,
   Eye,
+  User,
 } from "lucide-react";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 
@@ -86,7 +87,7 @@ interface TaskListItem {
   popularity: number;
 }
 
-type MenuKey = "users" | "tasks" | "statistics";
+type MenuKey = "profile" | "users" | "tasks" | "statistics";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -94,7 +95,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<MenuKey>("users");
+  const [activeMenu, setActiveMenu] = useState<MenuKey>("profile");
 
   const [userPage, setUserPage] = useState(1);
   const [userSearch, setUserSearch] = useState("");
@@ -297,7 +298,15 @@ export default function AdminPage() {
     }
   };
 
-  const menuItems = [
+  const profileMenuItems = [
+    {
+      key: "profile" as MenuKey,
+      label: "基本信息",
+      icon: User,
+    },
+  ];
+
+  const adminMenuItems = [
     {
       key: "users" as MenuKey,
       label: "用户管理",
@@ -317,6 +326,44 @@ export default function AdminPage() {
 
   const renderContent = () => {
     switch (activeMenu) {
+      case "profile":
+        return (
+          <div className="max-w-2xl">
+            <h2 className="text-xl font-semibold mb-6">基本信息</h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-content2 rounded-lg">
+                <Avatar
+                  name={user?.username?.charAt(0).toUpperCase()}
+                  className="w-16 h-16 text-xl"
+                />
+                <div>
+                  <p className="text-lg font-medium">{user?.username}</p>
+                  <p className="text-default-500">{user?.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-content2 rounded-lg">
+                  <p className="text-sm text-default-400">用户ID</p>
+                  <p className="font-mono text-sm">{user?.id}</p>
+                </div>
+                <div className="p-4 bg-content2 rounded-lg">
+                  <p className="text-sm text-default-400">角色</p>
+                  <Chip size="sm" variant="flat" color={user?.role === "ADMIN" ? "danger" : "primary"}>
+                    {user?.role === "ADMIN" ? "管理员" : "普通用户"}
+                  </Chip>
+                </div>
+                <div className="p-4 bg-content2 rounded-lg">
+                  <p className="text-sm text-default-400">OpenClaw ID</p>
+                  <p className="text-sm">{user?.openClawId || "未绑定"}</p>
+                </div>
+                <div className="p-4 bg-content2 rounded-lg">
+                  <p className="text-sm text-default-400">注册时间</p>
+                  <p className="text-sm">{user?.createdAt ? new Date(user.createdAt).toLocaleString("zh-CN") : "-"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       case "users":
         return (
           <>
@@ -660,9 +707,9 @@ export default function AdminPage() {
 
       <div className="flex flex-1">
         <div className="w-64 bg-content1 border-r border-divider p-4">
-          <div className="mb-2">
-            <p className="text-xs text-default-400 px-2 mb-2">管理员功能</p>
-            {menuItems.map((item) => {
+          <div className="mb-4">
+            <p className="text-xs text-default-400 px-2 mb-2">个人中心</p>
+            {profileMenuItems.map((item) => {
               const IconComponent = item.icon;
               return (
                 <Button
@@ -678,6 +725,26 @@ export default function AdminPage() {
               );
             })}
           </div>
+          {user?.role === "ADMIN" && (
+            <div className="mb-2">
+              <p className="text-xs text-default-400 px-2 mb-2">管理员功能</p>
+              {adminMenuItems.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <Button
+                    key={item.key}
+                    variant={activeMenu === item.key ? "flat" : "light"}
+                    color={activeMenu === item.key ? "primary" : "default"}
+                    className="w-full justify-start mb-1"
+                    startContent={<IconComponent size={20} />}
+                    onPress={() => setActiveMenu(item.key)}
+                  >
+                    {item.label}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <main className="flex-1 p-6 overflow-auto">
