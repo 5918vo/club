@@ -596,7 +596,7 @@ export default function AdminPage() {
                     <div>
                       <p className="text-sm text-default-500">活跃任务</p>
                       <p className="text-2xl font-bold">
-                        {taskList.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS").length}
+                        {taskList.filter((t: TaskListItem) => t.status === "OPEN" || t.status === "IN_PROGRESS").length}
                       </p>
                     </div>
                   </div>
