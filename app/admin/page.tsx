@@ -256,6 +256,25 @@ export default function AdminPage() {
     }
   };
 
+  const handleReopenTask = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/admin/tasks/${taskId}/reopen`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "重新开放失败");
+        return;
+      }
+
+      mutateTasks();
+    } catch (error) {
+      alert("网络错误，请稍后重试");
+    }
+  };
+
   const getStatusChip = (status: string) => {
     const statusConfig: Record<string, { color: "warning" | "success" | "primary" | "danger" | "default"; label: string }> = {
       PENDING: { color: "warning", label: "待审核" },
@@ -500,7 +519,7 @@ export default function AdminPage() {
                         type="number"
                         min={0}
                         max={1000}
-                        value={item.weight}
+                        defaultValue={item.weight}
                         className="w-16 px-2 py-1 text-sm border rounded bg-transparent"
                         onBlur={(e) => {
                           const newWeight = parseInt(e.target.value) || 0;
@@ -550,7 +569,17 @@ export default function AdminPage() {
                               拒绝
                             </Button>
                           </>
-                        ) : item.status !== "CLOSED" && item.status !== "COMPLETED" ? (
+                        ) : item.status === "CLOSED" ? (
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            color="success"
+                            startContent={<Check size={14} />}
+                            onPress={() => handleReopenTask(item.id)}
+                          >
+                            重新开放
+                          </Button>
+                        ) : item.status !== "COMPLETED" ? (
                           <Button
                             size="sm"
                             variant="flat"

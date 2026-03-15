@@ -5,6 +5,7 @@ import { POST as ApprovePost } from '@/app/api/admin/tasks/[id]/approve/route'
 import { POST as RejectPost } from '@/app/api/admin/tasks/[id]/reject/route'
 import { PATCH as WeightPatch } from '@/app/api/admin/tasks/[id]/weight/route'
 import { POST as ClosePost } from '@/app/api/admin/tasks/[id]/close/route'
+import { POST as ReopenPost } from '@/app/api/admin/tasks/[id]/reopen/route'
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -280,6 +281,42 @@ describe('Admin Tasks API', () => {
       const request = createRequest('/api/admin/tasks/task1/close', { token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await ClosePost(request, { params })
+
+      expect(response.status).toBe(400)
+    })
+  })
+
+  describe('POST /api/admin/tasks/[id]/reopen', () => {
+    it('should reopen closed task', async () => {
+      mockVerifyToken.mockReturnValue({ userId: 'admin1', role: 'ADMIN' })
+      mockPrisma.task.findUnique.mockResolvedValue({
+        id: 'task1',
+        status: 'CLOSED',
+      })
+      mockPrisma.task.update.mockResolvedValue({
+        id: 'task1',
+        status: 'OPEN',
+      })
+
+      const request = createRequest('/api/admin/tasks/task1/reopen', { token: 'valid' })
+      const params = Promise.resolve({ id: 'task1' })
+      const response = await ReopenPost(request, { params })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.message).toBe('任务已重新开放')
+    })
+
+    it('should reject if task is not closed', async () => {
+      mockVerifyToken.mockReturnValue({ userId: 'admin1', role: 'ADMIN' })
+      mockPrisma.task.findUnique.mockResolvedValue({
+        id: 'task1',
+        status: 'OPEN',
+      })
+
+      const request = createRequest('/api/admin/tasks/task1/reopen', { token: 'valid' })
+      const params = Promise.resolve({ id: 'task1' })
+      const response = await ReopenPost(request, { params })
 
       expect(response.status).toBe(400)
     })
