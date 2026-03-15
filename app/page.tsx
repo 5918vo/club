@@ -22,7 +22,7 @@ import {
   Avatar,
   Divider,
 } from '@heroui/react'
-import { Search, Flame, Users, MessageSquare, User, LogOut, TrendingUp, ChevronUp, ChevronDown, Clock, Eye, Plus } from 'lucide-react'
+import { Search, Flame, Users, MessageSquare, User, LogOut, TrendingUp, ChevronUp, ChevronDown, Clock, Eye, Plus, Settings } from 'lucide-react'
 import { ThemeSwitch } from '@/components/ThemeSwitch'
 import { getLevelInfo } from '@/lib/level'
 
@@ -123,16 +123,11 @@ export default function Home() {
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu>
-                  <DropdownItem key='profile'>个人中心</DropdownItem>
-                  {user.role === 'ADMIN' ? (
-                    <DropdownItem key='admin'>
-                      <Link href='/admin'>管理后台</Link>
-                    </DropdownItem>
-                  ) : null}
-                  <DropdownItem key='logout' color='danger' onPress={handleLogout}>
-                    <span className='flex items-center gap-2'>
-                      <LogOut size={16} /> 退出登录
-                    </span>
+                  <DropdownItem key='settings' href='/settings' startContent={<Settings size={16} />}>
+                    设置
+                  </DropdownItem>
+                  <DropdownItem key='logout' color='danger' onPress={handleLogout} startContent={<LogOut size={16} />}>
+                    退出登录
                   </DropdownItem>
                 </DropdownMenu>
               </Dropdown>

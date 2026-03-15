@@ -35,22 +35,14 @@ import {
   LogOut, 
   Settings,
   Search,
-  Ban,
-  CheckCircle,
-  XCircle,
-  Check,
   TrendingUp,
-  Eye,
-  User,
 } from "lucide-react";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 
-interface UserInfo {
+interface AdminInfo {
   id: string;
   email: string;
   username: string;
-  role: string;
-  openClawId: string | null;
   createdAt: string;
 }
 
@@ -58,7 +50,6 @@ interface UserListItem {
   id: string;
   email: string;
   username: string;
-  role: string;
   openClawId: string | null;
   isActive: boolean;
   createdAt: string;
@@ -87,15 +78,15 @@ interface TaskListItem {
   popularity: number;
 }
 
-type MenuKey = "profile" | "users" | "tasks" | "statistics";
+type MenuKey = "users" | "tasks" | "statistics";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AdminPage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserInfo | null>(null);
+  const [admin, setAdmin] = useState<AdminInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<MenuKey>("profile");
+  const [activeMenu, setActiveMenu] = useState<MenuKey>("users");
 
   const [userPage, setUserPage] = useState(1);
   const [userSearch, setUserSearch] = useState("");
@@ -132,20 +123,20 @@ export default function AdminPage() {
   const taskTotalPages = Math.ceil(taskTotal / 10);
 
   useEffect(() => {
-    fetchUser();
+    fetchAdmin();
   }, []);
 
-  const fetchUser = async () => {
+  const fetchAdmin = async () => {
     try {
-      const response = await fetch("/api/auth/me");
+      const response = await fetch("/api/admin/me");
       if (!response.ok) {
-        router.push("/login");
+        router.push("/admin/login");
         return;
       }
       const data = await response.json();
-      setUser(data.user);
+      setAdmin(data.admin);
     } catch (error) {
-      router.push("/login");
+      router.push("/admin/login");
     } finally {
       setLoading(false);
     }
@@ -290,23 +281,14 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/login");
-      router.refresh();
+      await fetch("/api/admin/logout", { method: "POST" });
+      router.push("/admin/login");
     } catch (error) {
       console.error("登出失败:", error);
     }
   };
 
-  const profileMenuItems = [
-    {
-      key: "profile" as MenuKey,
-      label: "基本信息",
-      icon: User,
-    },
-  ];
-
-  const adminMenuItems = [
+  const menuItems = [
     {
       key: "users" as MenuKey,
       label: "用户管理",
@@ -326,44 +308,6 @@ export default function AdminPage() {
 
   const renderContent = () => {
     switch (activeMenu) {
-      case "profile":
-        return (
-          <div className="max-w-2xl">
-            <h2 className="text-xl font-semibold mb-6">基本信息</h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 bg-content2 rounded-lg">
-                <Avatar
-                  name={user?.username?.charAt(0).toUpperCase()}
-                  className="w-16 h-16 text-xl"
-                />
-                <div>
-                  <p className="text-lg font-medium">{user?.username}</p>
-                  <p className="text-default-500">{user?.email}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-content2 rounded-lg">
-                  <p className="text-sm text-default-400">用户ID</p>
-                  <p className="font-mono text-sm">{user?.id}</p>
-                </div>
-                <div className="p-4 bg-content2 rounded-lg">
-                  <p className="text-sm text-default-400">角色</p>
-                  <Chip size="sm" variant="flat" color={user?.role === "ADMIN" ? "danger" : "primary"}>
-                    {user?.role === "ADMIN" ? "管理员" : "普通用户"}
-                  </Chip>
-                </div>
-                <div className="p-4 bg-content2 rounded-lg">
-                  <p className="text-sm text-default-400">OpenClaw ID</p>
-                  <p className="text-sm">{user?.openClawId || "未绑定"}</p>
-                </div>
-                <div className="p-4 bg-content2 rounded-lg">
-                  <p className="text-sm text-default-400">注册时间</p>
-                  <p className="text-sm">{user?.createdAt ? new Date(user.createdAt).toLocaleString("zh-CN") : "-"}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
       case "users":
         return (
           <>
@@ -417,35 +361,24 @@ export default function AdminPage() {
               }
             >
               <TableHeader>
-                <TableColumn key="username">用户名</TableColumn>
-                <TableColumn key="email">邮箱</TableColumn>
-                <TableColumn key="openClawId">绑定 Token</TableColumn>
-                <TableColumn key="status">状态</TableColumn>
-                <TableColumn key="createdAt">注册时间</TableColumn>
-                <TableColumn key="actions">操作</TableColumn>
+                <TableColumn>用户名</TableColumn>
+                <TableColumn>邮箱</TableColumn>
+                <TableColumn>OpenClaw ID</TableColumn>
+                <TableColumn>状态</TableColumn>
+                <TableColumn>注册时间</TableColumn>
+                <TableColumn>操作</TableColumn>
               </TableHeader>
-              <TableBody 
+              <TableBody
                 items={userList}
                 isLoading={userLoading}
-                loadingContent={<Spinner label="加载中..." />}
+                loadingContent={<Spinner />}
                 emptyContent="暂无用户数据"
               >
                 {(item: UserListItem) => (
                   <TableRow key={item.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar name={item.username} size="sm" />
-                        <span>{item.username}</span>
-                      </div>
-                    </TableCell>
+                    <TableCell>{item.username}</TableCell>
                     <TableCell>{item.email}</TableCell>
-                    <TableCell>
-                      {item.openClawId ? (
-                        <code className="text-xs bg-default-100 px-2 py-1 rounded">{item.openClawId}</code>
-                      ) : (
-                        <span className="text-default-400">未绑定</span>
-                      )}
-                    </TableCell>
+                    <TableCell>{item.openClawId || "-"}</TableCell>
                     <TableCell>
                       <Chip
                         size="sm"
@@ -456,20 +389,13 @@ export default function AdminPage() {
                       </Chip>
                     </TableCell>
                     <TableCell>
-                      {new Date(item.createdAt).toLocaleString("zh-CN")}
+                      {new Date(item.createdAt).toLocaleDateString("zh-CN")}
                     </TableCell>
                     <TableCell>
                       <Button
                         size="sm"
-                        variant="light"
+                        variant="flat"
                         color={item.isActive ? "danger" : "success"}
-                        startContent={
-                          item.isActive ? (
-                            <Ban size={16} />
-                          ) : (
-                            <CheckCircle size={16} />
-                          )
-                        }
                         onPress={() => handleToggleUserStatus(item)}
                       >
                         {item.isActive ? "禁用" : "启用"}
@@ -488,7 +414,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-end mb-6">
               <div className="flex gap-2">
                 <Input
-                  placeholder="搜索任务标题或发布者"
+                  placeholder="搜索任务标题"
                   value={taskSearch}
                   onChange={(e) => setTaskSearch(e.target.value)}
                   onKeyDown={(e) => {
@@ -538,70 +464,55 @@ export default function AdminPage() {
               }
             >
               <TableHeader>
-                <TableColumn key="title">标题</TableColumn>
-                <TableColumn key="status">状态</TableColumn>
-                <TableColumn key="publisher">发布者</TableColumn>
-                <TableColumn key="weight">权重</TableColumn>
-                <TableColumn key="popularity">热度</TableColumn>
-                <TableColumn key="createdAt">创建时间</TableColumn>
-                <TableColumn key="actions">操作</TableColumn>
+                <TableColumn>标题</TableColumn>
+                <TableColumn>状态</TableColumn>
+                <TableColumn>热度</TableColumn>
+                <TableColumn>权重</TableColumn>
+                <TableColumn>发布者</TableColumn>
+                <TableColumn>创建时间</TableColumn>
+                <TableColumn>操作</TableColumn>
               </TableHeader>
-              <TableBody 
+              <TableBody
                 items={taskList}
                 isLoading={taskLoading}
-                loadingContent={<Spinner label="加载中..." />}
+                loadingContent={<Spinner />}
                 emptyContent="暂无任务数据"
               >
                 {(item: TaskListItem) => (
                   <TableRow key={item.id}>
                     <TableCell>
-                      <div className="max-w-[200px] truncate" title={item.title}>
-                        {item.title}
-                      </div>
+                      <div className="max-w-[200px] truncate">{item.title}</div>
                     </TableCell>
                     <TableCell>{getStatusChip(item.status)}</TableCell>
-                    <TableCell>{item.publisher?.username || "-"}</TableCell>
+                    <TableCell>{item.popularity}</TableCell>
                     <TableCell>
-                      <input
+                      <Input
                         type="number"
-                        min={0}
-                        max={1000}
                         defaultValue={item.weight}
-                        className="w-16 px-2 py-1 text-sm border rounded bg-transparent"
+                        min={0}
+                        max={100}
+                        size="sm"
+                        className="w-20"
                         onBlur={(e) => {
                           const newWeight = parseInt(e.target.value) || 0;
                           if (newWeight !== item.weight) {
                             handleUpdateWeight(item.id, newWeight);
                           }
                         }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            const newWeight = parseInt((e.target as HTMLInputElement).value) || 0;
-                            if (newWeight !== item.weight) {
-                              handleUpdateWeight(item.id, newWeight);
-                            }
-                          }
-                        }}
                       />
                     </TableCell>
+                    <TableCell>{item.publisher.username}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp size={14} className="text-warning" />
-                        <span>{item.popularity}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(item.createdAt).toLocaleString("zh-CN")}
+                      {new Date(item.createdAt).toLocaleDateString("zh-CN")}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        {item.status === "PENDING" ? (
+                        {item.status === "PENDING" && (
                           <>
                             <Button
                               size="sm"
                               variant="flat"
                               color="success"
-                              startContent={<Check size={14} />}
                               onPress={() => handleApproveTask(item.id)}
                             >
                               通过
@@ -610,41 +521,32 @@ export default function AdminPage() {
                               size="sm"
                               variant="flat"
                               color="danger"
-                              startContent={<XCircle size={14} />}
                               onPress={() => handleRejectTask(item.id)}
                             >
                               拒绝
                             </Button>
                           </>
-                        ) : item.status === "CLOSED" ? (
+                        )}
+                        {item.status === "OPEN" && (
                           <Button
                             size="sm"
                             variant="flat"
-                            color="success"
-                            startContent={<Check size={14} />}
-                            onPress={() => handleReopenTask(item.id)}
-                          >
-                            重新开放
-                          </Button>
-                        ) : item.status !== "COMPLETED" ? (
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            color="danger"
-                            startContent={<XCircle size={14} />}
+                            color="warning"
                             onPress={() => handleCloseTask(item.id)}
                           >
                             关闭
                           </Button>
-                        ) : null}
-                        <Button
-                          size="sm"
-                          variant="light"
-                          isIconOnly
-                          onPress={() => window.open(`/task/${item.id}`, "_blank")}
-                        >
-                          <Eye size={16} />
-                        </Button>
+                        )}
+                        {item.status === "CLOSED" && (
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            color="primary"
+                            onPress={() => handleReopenTask(item.id)}
+                          >
+                            重新开放
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -656,9 +558,51 @@ export default function AdminPage() {
 
       case "statistics":
         return (
-          <div className="text-center py-12 text-default-400">
-            <BarChart3 size={64} className="mx-auto mb-4 opacity-50" />
-            <p>数据统计功能开发中...</p>
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">数据统计</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardBody className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-primary-100 rounded-lg">
+                      <Users className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-default-500">总用户数</p>
+                      <p className="text-2xl font-bold">{userTotal}</p>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+              <Card>
+                <CardBody className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-success-100 rounded-lg">
+                      <ClipboardList className="w-6 h-6 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-default-500">总任务数</p>
+                      <p className="text-2xl font-bold">{taskTotal}</p>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+              <Card>
+                <CardBody className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-warning-100 rounded-lg">
+                      <TrendingUp className="w-6 h-6 text-warning" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-default-500">活跃任务</p>
+                      <p className="text-2xl font-bold">
+                        {taskList.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS").length}
+                      </p>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
           </div>
         );
 
@@ -675,25 +619,30 @@ export default function AdminPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar isBordered maxWidth="full">
+      <Navbar isBordered className="h-16">
         <NavbarBrand>
-          <p className="font-bold text-xl text-primary">虾湖</p>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">虾</span>
+            </div>
+            <p className="font-bold text-lg">虾湖 - 管理后台</p>
+          </div>
         </NavbarBrand>
         <NavbarContent justify="end">
           <ThemeSwitch />
-          <Dropdown>
+          <Dropdown placement="bottom-end">
             <DropdownTrigger>
-              <Button variant="light" startContent={<Avatar name={user.username} size="sm" />}>
-                {user.username}
+              <Button variant="light" className="flex items-center gap-2">
+                <Avatar
+                  name={admin?.username?.charAt(0).toUpperCase()}
+                  className="w-8 h-8"
+                />
+                <p className="hidden md:block">{admin?.username}</p>
               </Button>
             </DropdownTrigger>
-            <DropdownMenu>
+            <DropdownMenu aria-label="用户菜单">
               <DropdownItem key="settings" startContent={<Settings size={18} />}>
                 <p>设置</p>
               </DropdownItem>
@@ -707,9 +656,9 @@ export default function AdminPage() {
 
       <div className="flex flex-1">
         <div className="w-64 bg-content1 border-r border-divider p-4">
-          <div className="mb-4">
-            <p className="text-xs text-default-400 px-2 mb-2">个人中心</p>
-            {profileMenuItems.map((item) => {
+          <div className="mb-2">
+            <p className="text-xs text-default-400 px-2 mb-2">管理员功能</p>
+            {menuItems.map((item) => {
               const IconComponent = item.icon;
               return (
                 <Button
@@ -725,26 +674,6 @@ export default function AdminPage() {
               );
             })}
           </div>
-          {user?.role === "ADMIN" && (
-            <div className="mb-2">
-              <p className="text-xs text-default-400 px-2 mb-2">管理员功能</p>
-              {adminMenuItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <Button
-                    key={item.key}
-                    variant={activeMenu === item.key ? "flat" : "light"}
-                    color={activeMenu === item.key ? "primary" : "default"}
-                    className="w-full justify-start mb-1"
-                    startContent={<IconComponent size={20} />}
-                    onPress={() => setActiveMenu(item.key)}
-                  >
-                    {item.label}
-                  </Button>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         <main className="flex-1 p-6 overflow-auto">

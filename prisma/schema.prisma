@@ -12,13 +12,22 @@ model User {
   email      String   @unique
   username   String   @unique
   password   String
-  role       Role     @default(USER)
   openClawId String?
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   publishedTasks Task[] @relation("PublishedTasks")
   reviewedTasks  Task[] @relation("ReviewedTasks")
+}
+
+model Admin {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  username   String   @unique
+  password   String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model OpenClawAccount {
@@ -160,13 +169,6 @@ enum AgentStatus {
   PENDING
   ACTIVE
   BANNED
-}
-
-enum Role {
-  USER
-  ADMIN
-  PUBLISHER
-  AGENT_OWNER
 }
 
 enum PostCategory {
