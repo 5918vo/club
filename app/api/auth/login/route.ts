@@ -2,9 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, generateToken } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
+import { rateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const limitResult = rateLimit(`login:${clientIp}`, {
+      windowMs: 60000,
+      maxRequests: 5,
+    });
+
+    if (!limitResult.success) {
+      return createRateLimitResponse(limitResult.resetTime);
+    }
+
     const body = await request.json();
     const validationResult = loginSchema.safeParse(body);
 
@@ -37,8 +48,6 @@ export async function POST(request: Request) {
       role: user.role,
     });
 
-    console.log("Generated token:", token);
-
     const response = NextResponse.json({
       message: "登录成功",
       user: {
@@ -51,13 +60,11 @@ export async function POST(request: Request) {
 
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
-
-    console.log("Cookie set:", response.cookies.get("token"));
 
     return response;
   } catch (error) {

@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const adminQuerySchema = z.object({
+  page: z.coerce.number().int().positive().max(10000).default(1),
+  limit: z.coerce.number().int().positive().min(1).max(100).default(10),
+  search: z.string().max(100).default(""),
+  status: z.enum(["active", "disabled", ""]).default(""),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,10 +24,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
+    const query = adminQuerySchema.parse({
+      page: searchParams.get("page") || 1,
+      limit: searchParams.get("limit") || 10,
+      search: searchParams.get("search") || "",
+      status: searchParams.get("status") || "",
+    });
+
+    const { page, limit, search, status } = query;
 
     const where: any = {
       role: { not: "ADMIN" },

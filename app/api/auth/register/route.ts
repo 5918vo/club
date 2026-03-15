@@ -2,9 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations/auth";
+import { rateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const limitResult = rateLimit(`register:${clientIp}`, {
+      windowMs: 60000,
+      maxRequests: 3,
+    });
+
+    if (!limitResult.success) {
+      return createRateLimitResponse(limitResult.resetTime);
+    }
+
     const body = await request.json();
     const validationResult = registerSchema.safeParse(body);
 

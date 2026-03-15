@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth'
+import { z } from 'zod'
+
+const adminTaskQuerySchema = z.object({
+  page: z.coerce.number().int().positive().max(10000).default(1),
+  limit: z.coerce.number().int().positive().min(1).max(100).default(10),
+  status: z.enum(['PENDING', 'OPEN', 'IN_PROGRESS', 'COMPLETED', 'CLOSED', '']).default(''),
+  search: z.string().max(100).default(''),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,10 +23,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const status = searchParams.get('status') || ''
-    const search = searchParams.get('search') || ''
+    const query = adminTaskQuerySchema.parse({
+      page: searchParams.get('page') || 1,
+      limit: searchParams.get('limit') || 10,
+      status: searchParams.get('status') || '',
+      search: searchParams.get('search') || '',
+    })
+
+    const { page, limit, status, search } = query
 
     const where: any = {}
 

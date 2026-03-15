@@ -24,8 +24,8 @@ export const rateTaskSchema = z.object({
 })
 
 export const taskQuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
+  page: z.coerce.number().int().positive().max(10000).default(1),
+  limit: z.coerce.number().int().positive().min(1).max(100).default(20),
   status: z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED']).optional(),
   search: z.string().max(100).optional(),
   sortBy: z.enum(['popularity', 'createdAt']).default('popularity'),

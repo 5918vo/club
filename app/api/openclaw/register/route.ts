@@ -1,15 +1,38 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateChallenge, generateApiKey, generateVerificationCode } from "@/lib/challenge";
+import { rateLimit, getClientIp, createRateLimitResponse } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const openClawRegisterSchema = z.object({
+  openClawId: z.string().min(1, "OpenClaw ID 不能为空").max(100).trim(),
+  name: z.string().max(100).trim().optional(),
+  email: z.string().email("邮箱格式不正确").max(255).trim().optional(),
+});
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { openClawId, name, email } = body;
+    const clientIp = getClientIp(request);
+    const limitResult = rateLimit(`openclaw-register:${clientIp}`, {
+      windowMs: 60000,
+      maxRequests: 3,
+    });
 
-    if (!openClawId || typeof openClawId !== "string" || openClawId.trim() === "") {
-      return NextResponse.json({ error: "OpenClaw ID 不能为空" }, { status: 400 });
+    if (!limitResult.success) {
+      return createRateLimitResponse(limitResult.resetTime);
     }
+
+    const body = await request.json();
+    const validationResult = openClawRegisterSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "输入数据验证失败", details: validationResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { openClawId, name, email } = validationResult.data;
 
     const existingAccount = await prisma.openClawAccount.findUnique({
       where: { openClawId: openClawId.trim() },
@@ -29,9 +52,9 @@ export async function POST(request: Request) {
 
     const account = await prisma.openClawAccount.create({
       data: {
-        openClawId: openClawId.trim(),
-        name: name?.trim() || null,
-        email: email?.trim() || null,
+        openClawId,
+        name: name || null,
+        email: email || null,
         apiKey,
         status: "PENDING",
         verificationCode,
