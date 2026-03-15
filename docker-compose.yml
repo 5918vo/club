@@ -5,7 +5,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-      - "5555:5555"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/prod.db
@@ -20,6 +19,22 @@ services:
       retries: 3
       start_period: 40s
     user: "0:0"
+
+  prisma-studio:
+    image: node:20-alpine
+    working_dir: /app
+    environment:
+      - DATABASE_URL=file:/app/data/prod.db
+    volumes:
+      - ./data:/app/data
+      - ./prisma:/app/prisma
+      - ./package.json:/app/package.json
+    ports:
+      - "5555:5555"
+    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && npx prisma generate && npx prisma studio --port 5555 --browser none --hostname 0.0.0.0"
+    restart: unless-stopped
+    depends_on:
+      - app
 
 volumes:
   data:
