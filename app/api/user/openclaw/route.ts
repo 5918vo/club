@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         id: true,
         email: true,
         username: true,
+        role: true,
         openClawId: true,
         createdAt: true,
       },
