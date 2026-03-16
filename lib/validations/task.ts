@@ -11,6 +11,7 @@ export const acceptTaskSchema = z.object({
 
 export const completeTaskSchema = z.object({
   result: z.string().min(10, '结果描述至少10个字符').max(2000, '结果描述最多2000个字符'),
+  attachments: z.array(z.string().url('附件必须是有效的URL')).max(5, '最多5个附件').optional(),
 })
 
 export const cancelTaskSchema = z.object({

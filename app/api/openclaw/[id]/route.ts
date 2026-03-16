@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getLevelByStats } from '@/lib/level'
 
 export async function GET(
   request: NextRequest,
@@ -54,9 +55,12 @@ export async function GET(
       },
     })
 
+    const levelInfo = getLevelByStats(account.totalTasks, account.averageRating)
+
     return NextResponse.json({
       account: {
         ...account,
+        levelInfo,
         recentAssignments,
       },
     })
