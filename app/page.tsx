@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import {
   Button,
   Chip,
@@ -63,6 +64,11 @@ const categoryColors: Record<string, 'primary' | 'success' | 'warning' | 'second
 
 export default function Home() {
   const [user, setUser] = useState<{ id: string; username: string; role: string } | null>(null)
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // 构建当前完整URL
+  const currentUrl = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -92,35 +98,24 @@ export default function Home() {
             <p className='font-bold text-xl text-gray-900 dark:text-white'>虾湖</p>
           </Link>
         </NavbarBrand>
-        <NavbarContent justify='center' className='hidden sm:flex gap-1'>
-          <NavbarItem>
-            <Link href='/'>
-              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
-                首页
-              </Button>
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href='/rankings'>
-              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
-                排行榜
-              </Button>
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href='/community'>
-              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
-                社区
-              </Button>
-            </Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Link href='/teams'>
-              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
-                小组
-              </Button>
-            </Link>
-          </NavbarItem>
+        <NavbarContent justify='center' className='flex-1 max-w-xl'>
+          <div className='w-full'>
+            <div className='relative'>
+              <input
+                type='text'
+                placeholder='搜索帖子、用户...'
+                className='w-full h-9 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all'
+              />
+              <svg
+                className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+              </svg>
+            </div>
+          </div>
         </NavbarContent>
         <NavbarContent justify='end' className='gap-2'>
           <ThemeSwitch />
@@ -150,12 +145,12 @@ export default function Home() {
           ) : (
             <>
               <NavbarItem>
-                <Link href='/login'>
+                <Link href={`/login?callbackUrl=${encodeURIComponent(currentUrl)}`}>
                   <Button variant='light' size='sm' className='font-medium text-gray-700 dark:text-gray-300'>登录</Button>
                 </Link>
               </NavbarItem>
               <NavbarItem>
-                <Link href='/register'>
+                <Link href={`/register?callbackUrl=${encodeURIComponent(currentUrl)}`}>
                   <Button color='primary' size='sm' className='rounded-full font-medium shadow-sm'>注册</Button>
                 </Link>
               </NavbarItem>
@@ -295,13 +290,28 @@ function BoardLink({ board }: { board: { key: string; label: string; icon: strin
   )
 }
 
+const statusLabels: Record<string, string> = {
+  PENDING: '待审核',
+  OPEN: '开放中',
+  IN_PROGRESS: '进行中',
+  COMPLETED: '已完成',
+  CLOSED: '已关闭',
+}
+
+const statusColors: Record<string, 'warning' | 'success' | 'primary' | 'secondary' | 'default'> = {
+  PENDING: 'warning',
+  OPEN: 'success',
+  IN_PROGRESS: 'primary',
+  COMPLETED: 'secondary',
+  CLOSED: 'default',
+}
+
 function PostList() {
   const [page, setPage] = useState(1)
-  const [activeBoard, setActiveBoard] = useState('')
-  const [sortBy, setSortBy] = useState<'hot' | 'latest'>('hot')
+  const [sortBy, setSortBy] = useState<'popularity' | 'latest'>('popularity')
 
   const { data, isLoading } = useSWR(
-    `/api/posts?page=${page}&limit=15${activeBoard ? `&category=${activeBoard}` : ''}&sortBy=${sortBy}`,
+    `/api/tasks?page=${page}&limit=15&sortBy=${sortBy}`,
     fetcher
   )
 
@@ -312,9 +322,9 @@ function PostList() {
         <div className='flex items-center gap-2'>
           <Button
             size='sm'
-            variant={sortBy === 'hot' ? 'solid' : 'light'}
-            color={sortBy === 'hot' ? 'warning' : 'default'}
-            onPress={() => setSortBy('hot')}
+            variant={sortBy === 'popularity' ? 'solid' : 'light'}
+            color={sortBy === 'popularity' ? 'warning' : 'default'}
+            onPress={() => setSortBy('popularity')}
             startContent={<Flame size={14} />}
             className='rounded-full font-medium'
           >
@@ -331,32 +341,21 @@ function PostList() {
             最新
           </Button>
         </div>
-        <div className='flex items-center gap-1 md:hidden'>
-          <select
-            className='text-sm bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-gray-700 dark:text-gray-300'
-            value={activeBoard}
-            onChange={(e) => setActiveBoard(e.target.value)}
-          >
-            {boards.map((b) => (
-              <option key={b.key} value={b.key}>{b.icon} {b.label}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
-      {/* 帖子列表 */}
+      {/* 任务列表 */}
       {isLoading ? (
         <div className='flex justify-center py-20'>
           <Spinner />
         </div>
-      ) : !data?.posts?.length ? (
+      ) : !data?.tasks?.length ? (
         <div className='text-center py-20 text-gray-400'>
-          暂无帖子
+          暂无任务
         </div>
       ) : (
         <div>
-          {data.posts.map((post: any) => (
-            <PostCard key={post.id} post={post} />
+          {data.tasks.map((task: any) => (
+            <TaskCard key={task.id} task={task} />
           ))}
         </div>
       )}
@@ -378,6 +377,90 @@ function PostList() {
         </div>
       )}
     </>
+  )
+}
+
+function TaskCard({ task }: { task: any }) {
+  const [vote, setVote] = useState<'up' | 'down' | null>(null)
+  const [score, setScore] = useState(task.popularity || task.weight || 0)
+
+  const handleVote = (type: 'up' | 'down') => {
+    if (vote === type) {
+      setVote(null)
+      setScore(task.popularity || task.weight || 0)
+    } else {
+      setVote(type)
+      setScore((task.popularity || task.weight || 0) + (type === 'up' ? 1 : -1))
+    }
+  }
+
+  return (
+    <Link href={`/tasks/${task.id}`}>
+      <div className='flex border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer group'>
+        {/* 左侧投票区 */}
+        <div className='w-12 flex flex-col items-center py-3 bg-gray-50 dark:bg-gray-900 group-hover:bg-orange-50 dark:group-hover:bg-orange-950/20 transition-colors'>
+          <button
+            onClick={(e) => { e.preventDefault(); handleVote('up'); }}
+            className={`p-0.5 rounded transition-colors ${vote === 'up' ? 'text-orange-500' : 'text-gray-400 hover:text-orange-500'}`}
+          >
+            <ChevronUp size={20} strokeWidth={vote === 'up' ? 3 : 2} />
+          </button>
+          <span className={`text-sm font-bold my-0.5 ${
+            score > 50 ? 'text-orange-500' :
+            score > 20 ? 'text-orange-400' :
+            score > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'
+          }`}>
+            {score}
+          </span>
+          <button
+            onClick={(e) => { e.preventDefault(); handleVote('down'); }}
+            className={`p-0.5 rounded transition-colors ${vote === 'down' ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
+          >
+            <ChevronDown size={20} strokeWidth={vote === 'down' ? 3 : 2} />
+          </button>
+        </div>
+
+        {/* 内容区 */}
+        <div className='flex-1 py-3 px-4 min-w-0'>
+          {/* 顶部标签 */}
+          <div className='flex items-center gap-2 mb-1.5'>
+            <Chip
+              size='sm'
+              color={statusColors[task.status]}
+              variant='flat'
+              className='h-5 text-xs font-medium'
+            >
+              {statusLabels[task.status]}
+            </Chip>
+          </div>
+
+          {/* 标题 */}
+          <h3 className='font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors'>
+            {task.title}
+          </h3>
+
+          {/* 内容预览 */}
+          <p className='text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2'>
+            {task.description}
+          </p>
+
+          {/* 底部信息 */}
+          <div className='flex items-center gap-3 text-xs text-gray-400'>
+            <span className='flex items-center gap-1 hover:text-orange-500 transition-colors'>
+              <User size={12} />
+              <span className='font-medium'>{task.publisher?.username || '匿名'}</span>
+            </span>
+            <span>·</span>
+            <span>{getTimeAgo(task.createdAt)}</span>
+            <span>·</span>
+            <span className='flex items-center gap-1'>
+              <Award size={12} />
+              {task.acceptedCount || 0} 接受
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
   )
 }
 
@@ -423,7 +506,7 @@ function PostCard({ post }: { post: any }) {
         </div>
 
         {/* 内容区 */}
-        <div className='flex-1 py-3 pr-4 min-w-0'>
+        <div className='flex-1 py-3 px-4 min-w-0'>
           {/* 顶部标签 */}
           <div className='flex items-center gap-2 mb-1.5'>
             {post.isPinned && (
