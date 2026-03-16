@@ -51,7 +51,7 @@ describe('Admin Users API', () => {
   })
 
   describe('GET /api/admin/users', () => {
-    it('should return 401 when no token is provided', async () => {
+    it('should return 401 when no admin_token is provided', async () => {
       const request = createMockRequest('/api/admin/users')
       
       const response = await GET(request)
@@ -61,11 +61,11 @@ describe('Admin Users API', () => {
       expect(data.error).toBe('未登录')
     })
 
-    it('should return 403 when user is not admin', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'user@test.com', role: 'USER' })
+    it('should return 403 when token is invalid', async () => {
+      mockVerifyToken.mockReturnValue(null)
       
       const request = createMockRequest('/api/admin/users', {
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'invalid-token' },
       })
       
       const response = await GET(request)
@@ -76,15 +76,15 @@ describe('Admin Users API', () => {
     })
 
     it('should return users list for admin', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com', role: 'ADMIN' })
+      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com' })
       mockPrisma.user.count.mockResolvedValue(2)
       mockPrisma.user.findMany.mockResolvedValue([
-        { id: '1', email: 'user1@test.com', username: 'user1', role: 'USER', openClawId: null, isActive: true, createdAt: new Date() },
-        { id: '2', email: 'user2@test.com', username: 'user2', role: 'USER', openClawId: 'oc-123', isActive: false, createdAt: new Date() },
+        { id: '1', email: 'user1@test.com', username: 'user1', openClawId: null, isActive: true, createdAt: new Date() },
+        { id: '2', email: 'user2@test.com', username: 'user2', openClawId: 'oc-123', isActive: false, createdAt: new Date() },
       ])
       
       const request = createMockRequest('/api/admin/users?page=1&limit=10', {
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'valid-token' },
       })
       
       const response = await GET(request)
@@ -97,14 +97,14 @@ describe('Admin Users API', () => {
     })
 
     it('should filter users by search term', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com', role: 'ADMIN' })
+      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com' })
       mockPrisma.user.count.mockResolvedValue(1)
       mockPrisma.user.findMany.mockResolvedValue([
-        { id: '1', email: 'john@test.com', username: 'john', role: 'USER', openClawId: null, isActive: true, createdAt: new Date() },
+        { id: '1', email: 'john@test.com', username: 'john', openClawId: null, isActive: true, createdAt: new Date() },
       ])
       
       const request = createMockRequest('/api/admin/users?page=1&limit=10&search=john', {
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'valid-token' },
       })
       
       const response = await GET(request)
@@ -125,14 +125,14 @@ describe('Admin Users API', () => {
     })
 
     it('should filter users by status', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com', role: 'ADMIN' })
+      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com' })
       mockPrisma.user.count.mockResolvedValue(1)
       mockPrisma.user.findMany.mockResolvedValue([
-        { id: '1', email: 'user@test.com', username: 'user', role: 'USER', openClawId: null, isActive: false, createdAt: new Date() },
+        { id: '1', email: 'user@test.com', username: 'user', openClawId: null, isActive: false, createdAt: new Date() },
       ])
       
       const request = createMockRequest('/api/admin/users?page=1&limit=10&status=disabled', {
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'valid-token' },
       })
       
       const response = await GET(request)
@@ -149,7 +149,7 @@ describe('Admin Users API', () => {
   })
 
   describe('PATCH /api/admin/users', () => {
-    it('should return 401 when no token is provided', async () => {
+    it('should return 401 when no admin_token is provided', async () => {
       const request = createMockRequest('/api/admin/users', {
         method: 'PATCH',
         body: { userId: '2', isActive: false },
@@ -162,12 +162,12 @@ describe('Admin Users API', () => {
       expect(data.error).toBe('未登录')
     })
 
-    it('should return 403 when user is not admin', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'user@test.com', role: 'USER' })
+    it('should return 403 when token is invalid', async () => {
+      mockVerifyToken.mockReturnValue(null)
       
       const request = createMockRequest('/api/admin/users', {
         method: 'PATCH',
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'invalid-token' },
         body: { userId: '2', isActive: false },
       })
       
@@ -179,11 +179,11 @@ describe('Admin Users API', () => {
     })
 
     it('should return 400 when userId is missing', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com', role: 'ADMIN' })
+      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com' })
       
       const request = createMockRequest('/api/admin/users', {
         method: 'PATCH',
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'valid-token' },
         body: { isActive: false },
       })
       
@@ -195,11 +195,11 @@ describe('Admin Users API', () => {
     })
 
     it('should return 400 when isActive is missing', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com', role: 'ADMIN' })
+      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com' })
       
       const request = createMockRequest('/api/admin/users', {
         method: 'PATCH',
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'valid-token' },
         body: { userId: '2' },
       })
       
@@ -210,35 +210,18 @@ describe('Admin Users API', () => {
       expect(data.error).toBe('缺少状态参数')
     })
 
-    it('should return 400 when trying to modify own status', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com', role: 'ADMIN' })
-      
-      const request = createMockRequest('/api/admin/users', {
-        method: 'PATCH',
-        cookies: { token: 'valid-token' },
-        body: { userId: '1', isActive: false },
-      })
-      
-      const response = await PATCH(request)
-      const data = await response.json()
-      
-      expect(response.status).toBe(400)
-      expect(data.error).toBe('不能修改自己的状态')
-    })
-
     it('should update user status successfully', async () => {
-      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com', role: 'ADMIN' })
+      mockVerifyToken.mockReturnValue({ userId: '1', email: 'admin@test.com' })
       mockPrisma.user.update.mockResolvedValue({
         id: '2',
         email: 'user@test.com',
         username: 'user',
-        role: 'USER',
         isActive: false,
       })
       
       const request = createMockRequest('/api/admin/users', {
         method: 'PATCH',
-        cookies: { token: 'valid-token' },
+        cookies: { admin_token: 'valid-token' },
         body: { userId: '2', isActive: false },
       })
       
