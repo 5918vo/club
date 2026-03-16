@@ -48,3 +48,7 @@ prisma/*.db-journal
 data/
 *.db
 *.db-journal
+
+# blue-green deployment
+.deploy-state
+nginx/conf.d/

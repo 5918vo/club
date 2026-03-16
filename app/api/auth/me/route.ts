@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { verifyToken, extractTokenFromHeader } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function createUnauthorizedResponse() {
+  const response = NextResponse.json({ error: "未授权" }, { status: 401 });
+  response.cookies.delete("token");
+  return response;
+}
+
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -10,11 +16,11 @@ export async function GET(request: Request) {
     if (!token) {
       const cookieToken = request.headers.get("cookie")?.split("token=")[1]?.split(";")[0];
       if (!cookieToken) {
-        return NextResponse.json({ error: "未授权" }, { status: 401 });
+        return createUnauthorizedResponse();
       }
       const decoded = verifyToken(cookieToken);
       if (!decoded) {
-        return NextResponse.json({ error: "无效的令牌" }, { status: 401 });
+        return createUnauthorizedResponse();
       }
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
@@ -27,14 +33,14 @@ export async function GET(request: Request) {
         },
       });
       if (!user) {
-        return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+        return createUnauthorizedResponse();
       }
       return NextResponse.json({ user });
     }
 
     const decoded = verifyToken(token);
     if (!decoded) {
-      return NextResponse.json({ error: "无效的令牌" }, { status: 401 });
+      return createUnauthorizedResponse();
     }
 
     const user = await prisma.user.findUnique({
@@ -49,7 +55,7 @@ export async function GET(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+      return createUnauthorizedResponse();
     }
 
     return NextResponse.json({ user });

@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const existingAdmin = await prisma.user.findUnique({
+  const existingAdmin = await prisma.admin.findUnique({
     where: { email: "admin@clawhub.com" },
   });
 
@@ -16,12 +16,11 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash("123456", 10);
 
-  const admin = await prisma.user.create({
+  const admin = await prisma.admin.create({
     data: {
       email: "admin@clawhub.com",
       username: "admin",
       password: hashedPassword,
-      role: "ADMIN",
     },
   });
 
@@ -29,7 +28,6 @@ async function main() {
     id: admin.id,
     email: admin.email,
     username: admin.username,
-    role: admin.role,
   });
 }
 
