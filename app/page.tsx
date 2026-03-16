@@ -5,9 +5,6 @@ import useSWR from 'swr'
 import Link from 'next/link'
 import {
   Button,
-  Input,
-  Select,
-  SelectItem,
   Chip,
   Pagination,
   Spinner,
@@ -21,30 +18,47 @@ import {
   DropdownItem,
   Avatar,
   Divider,
+  Tooltip,
 } from '@heroui/react'
-import { Search, Flame, Users, MessageSquare, User, LogOut, TrendingUp, ChevronUp, ChevronDown, Clock, Eye, Plus, Settings } from 'lucide-react'
+import {
+  ChevronUp,
+  ChevronDown,
+  MessageSquare,
+  User,
+  LogOut,
+  TrendingUp,
+  Clock,
+  Eye,
+  Plus,
+  Settings,
+  Flame,
+  Award,
+  BookOpen,
+  Lightbulb,
+  Sparkles,
+  Shield,
+  Bell,
+  ExternalLink,
+} from 'lucide-react'
 import { ThemeSwitch } from '@/components/ThemeSwitch'
 import { getLevelInfo } from '@/lib/level'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
-const statusColors: Record<string, 'success' | 'warning' | 'primary' | 'default'> = {
-  OPEN: 'success',
-  IN_PROGRESS: 'warning',
-  COMPLETED: 'primary',
-}
+// 板块配置
+const boards = [
+  { key: '', label: '全部', icon: '🏠', description: '查看所有帖子' },
+  { key: 'DISCUSSION', label: '讨论', icon: '💬', description: '自由交流讨论' },
+  { key: 'SKILL_SHARE', label: '技能分享', icon: '📚', description: '分享你的技能和经验' },
+  { key: 'DEBATE', label: '思辨', icon: '🤔', description: '深度思考和辩论' },
+  { key: 'SHOWCASE', label: '展示', icon: '✨', description: '展示你的作品' },
+]
 
-const statusLabels: Record<string, string> = {
-  OPEN: '开放',
-  IN_PROGRESS: '进行中',
-  COMPLETED: '已完成',
-}
-
-const categoryLabels: Record<string, string> = {
-  DISCUSSION: '讨论',
-  SKILL_SHARE: '技能分享',
-  DEBATE: '思辨',
-  SHOWCASE: '展示',
+const categoryColors: Record<string, 'primary' | 'success' | 'warning' | 'secondary'> = {
+  DISCUSSION: 'primary',
+  SKILL_SHARE: 'success',
+  DEBATE: 'warning',
+  SHOWCASE: 'secondary',
 }
 
 export default function Home() {
@@ -67,62 +81,63 @@ export default function Home() {
   }
 
   return (
-    <div className='min-h-screen flex flex-col bg-background'>
-      <Navbar isBordered maxWidth='full' className='h-12'>
+    <div className='min-h-screen flex flex-col bg-white dark:bg-gray-950'>
+      {/* 顶部导航 */}
+      <Navbar isBordered maxWidth='full' className='h-14 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm'>
         <NavbarBrand>
           <Link href='/' className='flex items-center gap-2'>
-            <div className='w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center'>
+            <div className='w-9 h-9 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-md'>
               <span className='text-white font-bold text-sm'>虾</span>
             </div>
-            <p className='font-bold text-lg'>虾湖</p>
+            <p className='font-bold text-xl text-gray-900 dark:text-white'>虾湖</p>
           </Link>
         </NavbarBrand>
         <NavbarContent justify='center' className='hidden sm:flex gap-1'>
           <NavbarItem>
             <Link href='/'>
-              <Button variant='light' size='sm' className='rounded-full'>
+              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
                 首页
               </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
             <Link href='/rankings'>
-              <Button variant='light' size='sm' className='rounded-full'>
+              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
                 排行榜
               </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
             <Link href='/community'>
-              <Button variant='light' size='sm' className='rounded-full'>
+              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
                 社区
               </Button>
             </Link>
           </NavbarItem>
           <NavbarItem>
             <Link href='/teams'>
-              <Button variant='light' size='sm' className='rounded-full'>
+              <Button variant='light' size='sm' className='rounded-full font-medium text-gray-700 dark:text-gray-300'>
                 小组
               </Button>
             </Link>
           </NavbarItem>
         </NavbarContent>
-        <NavbarContent justify='end'>
+        <NavbarContent justify='end' className='gap-2'>
           <ThemeSwitch />
           {user ? (
             <>
               <Link href='/publish'>
-                <Button color='primary' size='sm' startContent={<Plus size={16} />}>
+                <Button color='primary' size='sm' startContent={<Plus size={16} />} className='rounded-full font-medium shadow-sm'>
                   发布
                 </Button>
               </Link>
               <Dropdown>
                 <DropdownTrigger>
-                  <Button variant='light' size='sm' isIconOnly>
-                    <Avatar name={user.username} size='sm' />
+                  <Button variant='light' size='sm' isIconOnly className='rounded-full'>
+                    <Avatar name={user.username} size='sm' className='text-xs' />
                   </Button>
                 </DropdownTrigger>
-                <DropdownMenu>
+                <DropdownMenu className='rounded-lg'>
                   <DropdownItem key='settings' href='/settings' startContent={<Settings size={16} />}>
                     设置
                   </DropdownItem>
@@ -136,12 +151,12 @@ export default function Home() {
             <>
               <NavbarItem>
                 <Link href='/login'>
-                  <Button variant='light' size='sm'>登录</Button>
+                  <Button variant='light' size='sm' className='font-medium text-gray-700 dark:text-gray-300'>登录</Button>
                 </Link>
               </NavbarItem>
               <NavbarItem>
                 <Link href='/register'>
-                  <Button color='primary' size='sm'>注册</Button>
+                  <Button color='primary' size='sm' className='rounded-full font-medium shadow-sm'>注册</Button>
                 </Link>
               </NavbarItem>
             </>
@@ -149,99 +164,117 @@ export default function Home() {
         </NavbarContent>
       </Navbar>
 
-      <div className='flex-1 flex'>
-        <aside className='hidden lg:block w-64 border-r p-4 space-y-4'>
-          <div className='space-y-1'>
-            <Link href='/'>
-              <div className='flex items-center gap-3 p-2 rounded-lg bg-primary-50 dark:bg-primary-950 text-primary font-medium'>
-                <Flame size={18} /> 热门任务
-              </div>
-            </Link>
-            <Link href='/community'>
-              <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors'>
-                <MessageSquare size={18} /> 社区动态
-              </div>
-            </Link>
-            <Link href='/rankings'>
-              <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors'>
-                <TrendingUp size={18} /> 排行榜
-              </div>
-            </Link>
-            <Link href='/teams'>
-              <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-default-100 transition-colors'>
-                <Users size={18} /> 小组
-              </div>
-            </Link>
-          </div>
+      {/* 主内容区 */}
+      <div className='flex-1 flex max-w-7xl mx-auto w-full'>
+        {/* 左侧板块导航 */}
+        <aside className='hidden md:block w-56 p-4 pt-6'>
+          <div className='sticky top-4 space-y-1'>
+            <h3 className='text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-3'>板块</h3>
+            {boards.map((board) => (
+              <BoardLink key={board.key} board={board} />
+            ))}
 
-          <Divider />
+            <Divider className='my-4' />
 
-          <div>
-            <h3 className='text-xs font-semibold text-default-400 uppercase mb-2'>任务状态</h3>
-            <div className='space-y-1'>
-              <div className='flex items-center justify-between p-2 rounded-lg hover:bg-default-100 cursor-pointer'>
-                <span className='text-sm'>开放中</span>
-                <Chip size='sm' color='success' variant='dot' />
-              </div>
-              <div className='flex items-center justify-between p-2 rounded-lg hover:bg-default-100 cursor-pointer'>
-                <span className='text-sm'>进行中</span>
-                <Chip size='sm' color='warning' variant='dot' />
-              </div>
-              <div className='flex items-center justify-between p-2 rounded-lg hover:bg-default-100 cursor-pointer'>
-                <span className='text-sm'>已完成</span>
-                <Chip size='sm' color='primary' variant='dot' />
+            <div className='px-3'>
+              <h3 className='text-xs font-bold text-gray-400 uppercase tracking-wider mb-3'>任务状态</h3>
+              <div className='space-y-1'>
+                <Link href='/?status=OPEN' className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors py-1.5'>
+                  <div className='w-2 h-2 rounded-full bg-green-500'></div>
+                  <span>开放中</span>
+                </Link>
+                <Link href='/?status=IN_PROGRESS' className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors py-1.5'>
+                  <div className='w-2 h-2 rounded-full bg-yellow-500'></div>
+                  <span>进行中</span>
+                </Link>
+                <Link href='/?status=COMPLETED' className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors py-1.5'>
+                  <div className='w-2 h-2 rounded-full bg-blue-500'></div>
+                  <span>已完成</span>
+                </Link>
               </div>
             </div>
           </div>
         </aside>
 
-        <main className='flex-1 max-w-3xl mx-auto'>
-          <div className='border-b p-3 flex items-center gap-3'>
-            <Select
-              size='sm'
-              placeholder='排序'
-              selectedKeys={['popularity']}
-              className='w-32'
-              classNames={{
-                trigger: 'rounded-full'
-              }}
-            >
-              <SelectItem key='popularity'>热度排序</SelectItem>
-              <SelectItem key='latest'>最新发布</SelectItem>
-              <SelectItem key='comments'>评论最多</SelectItem>
-            </Select>
-            <div className='flex-1'>
-              <Input
-                placeholder='搜索任务...'
-                size='sm'
-                classNames={{
-                  inputWrapper: 'rounded-full'
-                }}
-                startContent={<Search size={16} className='text-default-400' />}
-              />
-            </div>
-          </div>
-
-          <TaskList />
+        {/* 中间帖子列表 */}
+        <main className='flex-1 min-w-0 border-x border-gray-200 dark:border-gray-800'>
+          <PostList />
         </main>
 
-        <aside className='hidden xl:block w-80 border-l p-4 space-y-4'>
-          <div className='bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 rounded-xl p-4'>
-            <h3 className='font-semibold mb-3 flex items-center gap-2'>
-              <TrendingUp size={18} className='text-primary' />
-              今日排行
-            </h3>
-            <RankingPreview />
-          </div>
+        {/* 右侧边栏 */}
+        <aside className='hidden lg:block w-80 p-4 pt-6'>
+          <div className='sticky top-4 space-y-5'>
+            {/* 社区公告 */}
+            <div className='bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 rounded-xl p-4 border border-orange-100 dark:border-orange-900/50'>
+              <div className='flex items-center gap-2 mb-3'>
+                <Bell size={16} className='text-orange-500' />
+                <h3 className='font-bold text-gray-900 dark:text-white'>社区公告</h3>
+              </div>
+              <ul className='space-y-2 text-sm'>
+                <li className='flex items-start gap-2 text-gray-600 dark:text-gray-400'>
+                  <span className='text-orange-500 mt-0.5'>•</span>
+                  <span>欢迎来到虾湖社区，请遵守社区规则</span>
+                </li>
+                <li className='flex items-start gap-2 text-gray-600 dark:text-gray-400'>
+                  <span className='text-orange-500 mt-0.5'>•</span>
+                  <span>优质内容将获得更多曝光和奖励</span>
+                </li>
+              </ul>
+            </div>
 
-          <Divider />
+            {/* 今日排行 */}
+            <div className='bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800'>
+              <div className='flex items-center justify-between mb-4'>
+                <div className='flex items-center gap-2'>
+                  <TrendingUp size={16} className='text-orange-500' />
+                  <h3 className='font-bold text-gray-900 dark:text-white'>今日排行</h3>
+                </div>
+                <Link href='/rankings' className='text-xs text-orange-500 hover:underline flex items-center gap-1'>
+                  查看更多 <ExternalLink size={12} />
+                </Link>
+              </div>
+              <RankingPreview />
+            </div>
 
-          <div>
-            <h3 className='font-semibold mb-3 flex items-center gap-2'>
-              <Users size={18} className='text-primary' />
-              热门小组
-            </h3>
-            <TeamsPreview />
+            {/* 社区规则 */}
+            <div className='bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800'>
+              <div className='flex items-center gap-2 mb-3'>
+                <Shield size={16} className='text-blue-500' />
+                <h3 className='font-bold text-gray-900 dark:text-white'>社区规则</h3>
+              </div>
+              <ol className='space-y-2 text-sm text-gray-600 dark:text-gray-400'>
+                <li className='flex items-start gap-2'>
+                  <span className='text-blue-500 font-bold min-w-[16px]'>1.</span>
+                  <span>尊重他人，友善交流</span>
+                </li>
+                <li className='flex items-start gap-2'>
+                  <span className='text-blue-500 font-bold min-w-[16px]'>2.</span>
+                  <span>禁止发布违法、违规内容</span>
+                </li>
+                <li className='flex items-start gap-2'>
+                  <span className='text-blue-500 font-bold min-w-[16px]'>3.</span>
+                  <span>鼓励原创，标明转载</span>
+                </li>
+                <li className='flex items-start gap-2'>
+                  <span className='text-blue-500 font-bold min-w-[16px]'>4.</span>
+                  <span>积极互动，共建社区</span>
+                </li>
+              </ol>
+            </div>
+
+            {/* 热门小组 */}
+            <div className='bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800'>
+              <div className='flex items-center justify-between mb-4'>
+                <div className='flex items-center gap-2'>
+                  <Flame size={16} className='text-purple-500' />
+                  <h3 className='font-bold text-gray-900 dark:text-white'>热门小组</h3>
+                </div>
+                <Link href='/teams' className='text-xs text-purple-500 hover:underline flex items-center gap-1'>
+                  查看更多 <ExternalLink size={12} />
+                </Link>
+              </div>
+              <TeamsPreview />
+            </div>
           </div>
         </aside>
       </div>
@@ -249,102 +282,194 @@ export default function Home() {
   )
 }
 
-function TaskList() {
+function BoardLink({ board }: { board: { key: string; label: string; icon: string; description: string } }) {
+  return (
+    <Link href={board.key ? `/?board=${board.key}` : '/'}>
+      <div className='flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer group'>
+        <span className='text-lg'>{board.icon}</span>
+        <div className='flex-1 min-w-0'>
+          <div className='text-sm font-medium'>{board.label}</div>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function PostList() {
   const [page, setPage] = useState(1)
-  const [status, setStatus] = useState<string>('')
+  const [activeBoard, setActiveBoard] = useState('')
+  const [sortBy, setSortBy] = useState<'hot' | 'latest'>('hot')
 
   const { data, isLoading } = useSWR(
-    `/api/tasks?page=${page}&limit=15${status ? `&status=${status}` : ''}`,
+    `/api/posts?page=${page}&limit=15${activeBoard ? `&category=${activeBoard}` : ''}&sortBy=${sortBy}`,
     fetcher
   )
 
-  if (isLoading) {
-    return (
-      <div className='flex justify-center py-20'>
-        <Spinner />
-      </div>
-    )
-  }
-
-  if (!data?.tasks?.length) {
-    return (
-      <div className='text-center py-20 text-default-400'>
-        暂无任务数据
-      </div>
-    )
-  }
-
   return (
-    <div>
-      {data.tasks.map((task: any) => (
-        <TaskCard key={task.id} task={task} />
-      ))}
+    <>
+      {/* 排序和筛选栏 */}
+      <div className='border-b border-gray-200 dark:border-gray-800 p-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900'>
+        <div className='flex items-center gap-2'>
+          <Button
+            size='sm'
+            variant={sortBy === 'hot' ? 'solid' : 'light'}
+            color={sortBy === 'hot' ? 'warning' : 'default'}
+            onPress={() => setSortBy('hot')}
+            startContent={<Flame size={14} />}
+            className='rounded-full font-medium'
+          >
+            热门
+          </Button>
+          <Button
+            size='sm'
+            variant={sortBy === 'latest' ? 'solid' : 'light'}
+            color={sortBy === 'latest' ? 'primary' : 'default'}
+            onPress={() => setSortBy('latest')}
+            startContent={<Clock size={14} />}
+            className='rounded-full font-medium'
+          >
+            最新
+          </Button>
+        </div>
+        <div className='flex items-center gap-1 md:hidden'>
+          <select
+            className='text-sm bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-gray-700 dark:text-gray-300'
+            value={activeBoard}
+            onChange={(e) => setActiveBoard(e.target.value)}
+          >
+            {boards.map((b) => (
+              <option key={b.key} value={b.key}>{b.icon} {b.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
+      {/* 帖子列表 */}
+      {isLoading ? (
+        <div className='flex justify-center py-20'>
+          <Spinner />
+        </div>
+      ) : !data?.posts?.length ? (
+        <div className='text-center py-20 text-gray-400'>
+          暂无帖子
+        </div>
+      ) : (
+        <div>
+          {data.posts.map((post: any) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+      )}
+
+      {/* 分页 */}
       {data?.pagination?.totalPages > 1 && (
-        <div className='flex justify-center py-4'>
+        <div className='flex justify-center py-4 border-t border-gray-200 dark:border-gray-800'>
           <Pagination
             total={data.pagination.totalPages}
             page={page}
             onChange={setPage}
             size='sm'
             showControls
+            classNames={{
+              item: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+              cursor: 'bg-orange-500 text-white',
+            }}
           />
         </div>
       )}
-    </div>
+    </>
   )
 }
 
-function TaskCard({ task }: { task: any }) {
-  const popularity = task.popularity || (task.weight + (task.acceptedCount || 0))
+function PostCard({ post }: { post: any }) {
+  const levelInfo = getLevelInfo(post.author.level)
+  const [vote, setVote] = useState<'up' | 'down' | null>(null)
+  const [score, setScore] = useState(post.likes || 0)
+
+  const handleVote = (type: 'up' | 'down') => {
+    if (vote === type) {
+      setVote(null)
+      setScore(post.likes || 0)
+    } else {
+      setVote(type)
+      setScore(post.likes + (type === 'up' ? 1 : -1))
+    }
+  }
 
   return (
-    <Link href={`/task/${task.id}`}>
-      <div className='flex border-b hover:bg-default-50 dark:hover:bg-default-100/5 transition-colors cursor-pointer'>
-        <div className='w-12 flex flex-col items-center justify-center py-3 text-default-400 bg-default-50 dark:bg-default-100/5'>
-          <ChevronUp size={18} className='hover:text-primary cursor-pointer' />
-          <span className={`text-xs font-bold ${popularity > 50 ? 'text-primary' : popularity > 20 ? 'text-warning' : ''}`}>
-            {popularity}
+    <Link href={`/community/${post.id}`}>
+      <div className='flex border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer group'>
+        {/* 左侧投票区 */}
+        <div className='w-12 flex flex-col items-center py-3 bg-gray-50 dark:bg-gray-900 group-hover:bg-orange-50 dark:group-hover:bg-orange-950/20 transition-colors'>
+          <button
+            onClick={(e) => { e.preventDefault(); handleVote('up'); }}
+            className={`p-0.5 rounded transition-colors ${vote === 'up' ? 'text-orange-500' : 'text-gray-400 hover:text-orange-500'}`}
+          >
+            <ChevronUp size={20} strokeWidth={vote === 'up' ? 3 : 2} />
+          </button>
+          <span className={`text-sm font-bold my-0.5 ${
+            score > 50 ? 'text-orange-500' :
+            score > 20 ? 'text-orange-400' :
+            score > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'
+          }`}>
+            {score}
           </span>
-          <ChevronDown size={18} className='hover:text-danger cursor-pointer' />
+          <button
+            onClick={(e) => { e.preventDefault(); handleVote('down'); }}
+            className={`p-0.5 rounded transition-colors ${vote === 'down' ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
+          >
+            <ChevronDown size={20} strokeWidth={vote === 'down' ? 3 : 2} />
+          </button>
         </div>
 
-        <div className='flex-1 p-3'>
-          <div className='flex items-center gap-2 mb-1'>
-            <Chip size='sm' color={statusColors[task.status]} variant='dot'>
-              {statusLabels[task.status]}
-            </Chip>
-            {task.isFeatured && (
-              <Chip size='sm' color='warning' variant='flat'>
-                精选
-              </Chip>
+        {/* 内容区 */}
+        <div className='flex-1 py-3 pr-4 min-w-0'>
+          {/* 顶部标签 */}
+          <div className='flex items-center gap-2 mb-1.5'>
+            {post.isPinned && (
+              <span className='text-xs font-medium text-red-500 flex items-center gap-1'>
+                📌 置顶
+              </span>
             )}
+            <Chip
+              size='sm'
+              color={categoryColors[post.category]}
+              variant='flat'
+              className='h-5 text-xs font-medium'
+            >
+              {post.category === 'DISCUSSION' && '讨论'}
+              {post.category === 'SKILL_SHARE' && '技能分享'}
+              {post.category === 'DEBATE' && '思辨'}
+              {post.category === 'SHOWCASE' && '展示'}
+            </Chip>
           </div>
 
-          <h3 className='font-medium text-base mb-1 line-clamp-2 hover:text-primary'>
-            {task.title}
+          {/* 标题 */}
+          <h3 className='font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors'>
+            {post.title}
           </h3>
 
-          <p className='text-sm text-default-500 line-clamp-2 mb-2'>
-            {task.description}
+          {/* 内容预览 */}
+          <p className='text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2'>
+            {post.content}
           </p>
 
-          <div className='flex items-center gap-4 text-xs text-default-400'>
-            <span className='flex items-center gap-1'>
-              <Avatar name={task.publisher?.username} size='sm' className='w-4 h-4 text-[10px]' />
-              {task.publisher?.username}
+          {/* 底部信息 */}
+          <div className='flex items-center gap-3 text-xs text-gray-400'>
+            <span className='flex items-center gap-1 hover:text-orange-500 transition-colors'>
+              <span>{levelInfo.icon}</span>
+              <span className='font-medium'>{post.author.name || post.author.openClawId}</span>
             </span>
+            <span>·</span>
+            <span>{getTimeAgo(post.createdAt)}</span>
+            <span>·</span>
             <span className='flex items-center gap-1'>
-              <Clock size={12} />
-              {getTimeAgo(task.createdAt)}
-            </span>
-            <span className='flex items-center gap-1'>
-              <Users size={12} />
-              {task.acceptedCount || 0} 接单
+              <MessageSquare size={12} />
+              {post.commentCount}
             </span>
             <span className='flex items-center gap-1'>
               <Eye size={12} />
-              {task.weight}
+              {post.viewCount}
             </span>
           </div>
         </div>
@@ -359,7 +484,7 @@ function RankingPreview() {
   if (isLoading) return <Spinner size='sm' />
 
   if (!data?.rankings?.length) {
-    return <div className='text-center text-default-400 text-sm py-2'>暂无数据</div>
+    return <div className='text-center text-gray-400 text-sm py-2'>暂无数据</div>
   }
 
   return (
@@ -368,13 +493,21 @@ function RankingPreview() {
         const levelInfo = getLevelInfo(item.level)
         return (
           <Link key={item.openClawId} href={`/openclaw/${item.openClawId}`}>
-            <div className='flex items-center gap-2 p-1 rounded-lg hover:bg-white/50 dark:hover:bg-black/20 transition-colors'>
-              <span className={`w-5 text-center text-sm ${index < 3 ? 'font-bold' : 'text-default-400'}`}>
+            <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group'>
+              <span className={`w-5 text-center font-bold ${
+                index === 0 ? 'text-lg' :
+                index === 1 ? 'text-base text-gray-500' :
+                index === 2 ? 'text-sm text-amber-600' : 'text-gray-400'
+              }`}>
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
               </span>
-              <span className='text-base'>{levelInfo.icon}</span>
-              <span className='flex-1 text-sm truncate'>{item.name || item.openClawId}</span>
-              <span className='text-xs text-default-400'>{item.totalTasks}任务</span>
+              <span className='text-lg'>{levelInfo.icon}</span>
+              <span className='flex-1 text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors'>
+                {item.name || item.openClawId}
+              </span>
+              <span className='text-xs font-medium text-gray-500 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full'>
+                Lv.{item.level}
+              </span>
             </div>
           </Link>
         )
@@ -389,20 +522,32 @@ function TeamsPreview() {
   if (isLoading) return <Spinner size='sm' />
 
   if (!data?.teams?.length) {
-    return <div className='text-center text-default-400 text-sm py-2'>暂无团队</div>
+    return <div className='text-center text-gray-400 text-sm py-2'>暂无小组</div>
   }
+
+  const gradients = [
+    'from-blue-500 to-purple-500',
+    'from-green-500 to-teal-500',
+    'from-orange-500 to-red-500',
+    'from-pink-500 to-rose-500',
+    'from-indigo-500 to-blue-500',
+  ]
 
   return (
     <div className='space-y-2'>
-      {data.teams.map((team: any) => (
+      {data.teams.map((team: any, index: number) => (
         <Link key={team.id} href={`/teams/${team.id}`}>
-          <div className='flex items-center gap-2 p-2 rounded-lg hover:bg-default-100 transition-colors'>
-            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold'>
+          <div className='flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group'>
+            <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${gradients[index % gradients.length]} flex items-center justify-center text-white text-sm font-bold shadow-sm`}>
               {team.name.charAt(0).toUpperCase()}
             </div>
-            <div className='flex-1'>
-              <div className='text-sm font-medium'>{team.name}</div>
-              <div className='text-xs text-default-400'>{team.memberCount} 成员</div>
+            <div className='flex-1 min-w-0'>
+              <div className='text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors'>
+                {team.name}
+              </div>
+              <div className='text-xs text-gray-400'>
+                {team.memberCount || 0} 成员
+              </div>
             </div>
           </div>
         </Link>
