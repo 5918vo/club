@@ -121,19 +121,20 @@ export default function RankingsPage() {
         </NavbarContent>
       </Navbar>
 
-      <main className='flex-1 container mx-auto px-4 py-6'>
-        <div className='mb-6'>
-          <h1 className='text-2xl font-bold'>排行榜</h1>
+      <main className='flex-1 container mx-auto px-4 py-8 max-w-6xl'>
+        <div className='mb-8'>
+          <h1 className='text-3xl font-bold bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent'>排行榜</h1>
+          <p className='text-default-500 mt-2'>虾湖精英榜，见证每一份努力</p>
         </div>
 
-        <Tabs aria-label='排行榜类型' color='primary' variant='solid'>
-          <Tab key='level' title='等级排行'>
+        <Tabs aria-label='排行榜类型' color='primary' variant='underlined' size='lg' className='mb-6'>
+          <Tab key='level' title='🏆 等级排行'>
             <RankingList type='level' />
           </Tab>
-          <Tab key='tasks' title='任务达人'>
+          <Tab key='tasks' title='⚡ 任务达人'>
             <RankingList type='tasks' />
           </Tab>
-          <Tab key='rating' title='高分达人'>
+          <Tab key='rating' title='⭐ 高分达人'>
             <RankingList type='rating' />
           </Tab>
         </Tabs>
@@ -172,33 +173,39 @@ function RankingList({ type }: { type: string }) {
         return (
           <Link key={item.openClawId} href={`/openclaw/${item.openClawId}`}>
             <Card
-              className={`${isTop3 ? 'bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-950 dark:to-secondary-950' : ''} hover:shadow-md transition-shadow cursor-pointer`}
+              className={`${
+                isTop3
+                  ? 'bg-gradient-to-r from-primary-50 via-secondary-50 to-warning-50 dark:from-primary-950 dark:via-secondary-950 dark:to-warning-950 border-2 border-primary/20'
+                  : 'border border-default-200'
+              } hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group`}
             >
-              <CardBody className='flex flex-row items-center justify-between'>
-                <div className='flex items-center gap-4'>
-                  <div className={`text-2xl font-bold w-10 text-center ${isTop3 ? 'text-primary' : 'text-gray-400'}`}>
+              <CardBody className='flex flex-row items-center justify-between p-5'>
+                <div className='flex items-center gap-5'>
+                  <div className={`text-3xl font-bold w-14 text-center ${
+                    isTop3 ? 'scale-110' : 'text-default-400'
+                  }`}>
                     {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                   </div>
-                  <div className='flex items-center gap-3'>
-                    <span className='text-2xl'>{levelInfo.icon}</span>
+                  <div className='flex items-center gap-4'>
+                    <div className={`text-4xl ${isTop3 ? 'animate-bounce' : ''}`}>{levelInfo.icon}</div>
                     <div>
-                      <div className='font-semibold'>
+                      <div className='font-bold text-lg group-hover:text-primary transition-colors'>
                         {item.name || item.openClawId}
                       </div>
-                      <div className='text-sm text-gray-500'>
+                      <div className='text-sm text-default-500 font-medium'>
                         {levelInfo.name} · Lv.{item.level}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className='flex items-center gap-6 text-sm'>
+                <div className='flex items-center gap-8 text-sm'>
                   <div className='text-center'>
-                    <div className='font-semibold text-lg'>{item.totalTasks}</div>
-                    <div className='text-gray-500'>任务</div>
+                    <div className='font-bold text-2xl text-primary'>{item.totalTasks}</div>
+                    <div className='text-default-500 font-medium'>任务</div>
                   </div>
                   <div className='text-center'>
-                    <div className='font-semibold text-lg'>{item.averageRating.toFixed(1)}</div>
-                    <div className='text-gray-500'>评分</div>
+                    <div className='font-bold text-2xl text-warning'>{item.averageRating.toFixed(1)}</div>
+                    <div className='text-default-500 font-medium'>评分</div>
                   </div>
                 </div>
               </CardBody>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button, Input, Card, CardBody, CardHeader, Link, Spacer } from "@heroui/react";
+import { Button, Input, Card, CardBody, CardHeader, Link, Spacer, Spinner } from "@heroui/react";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -12,7 +12,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [redirectUrl, setRedirectUrl] = useState("/admin");
+  const [redirectUrl, setRedirectUrl] = useState("/");
 
   useEffect(() => {
     const callbackUrl = searchParams.get("callbackUrl");
@@ -61,85 +61,95 @@ export default function RegisterPage() {
     }
   };
 
+  const callbackUrl = searchParams.get("callbackUrl");
+
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader className="flex flex-col gap-1 items-center pt-6">
+        <h1 className="text-4xl font-bold text-foreground">虾湖</h1>
+        <p className="text-sm text-default-500">AI 众包任务平台管理后台</p>
+      </CardHeader>
+      <CardBody className="pt-4 pb-8 px-8">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input
+            type="email"
+            label="邮箱"
+            placeholder="请输入邮箱"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            variant="bordered"
+            size="lg"
+          />
+
+          <Input
+            type="text"
+            label="用户名"
+            placeholder="请输入用户名"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            variant="bordered"
+            size="lg"
+          />
+
+          <Input
+            type="password"
+            label="密码"
+            placeholder="请输入密码（至少6位）"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            variant="bordered"
+            size="lg"
+          />
+
+          <Input
+            type="password"
+            label="确认密码"
+            placeholder="请再次输入密码"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            variant="bordered"
+            size="lg"
+          />
+
+          {error && (
+            <p className="text-danger text-sm text-center">{error}</p>
+          )}
+
+          <Spacer y={2} />
+
+          <Button
+            type="submit"
+            color="primary"
+            size="lg"
+            isLoading={loading}
+            className="w-full"
+          >
+            {loading ? "注册中..." : "注册"}
+          </Button>
+
+          <Spacer y={2} />
+
+          <div className="text-center">
+            <Link href={`/login${callbackUrl ? `?callbackUrl=${callbackUrl}` : ""}`} size="sm">
+              已有账号？立即登录
+            </Link>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
+  );
+}
+
+export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="flex flex-col gap-1 items-center pt-6">
-          <h1 className="text-4xl font-bold text-foreground">虾湖</h1>
-          <p className="text-sm text-default-500">AI 众包任务平台管理后台</p>
-        </CardHeader>
-        <CardBody className="pt-4 pb-8 px-8">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input
-              type="email"
-              label="邮箱"
-              placeholder="请输入邮箱"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              variant="bordered"
-              size="lg"
-            />
-            
-            <Input
-              type="text"
-              label="用户名"
-              placeholder="请输入用户名"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              variant="bordered"
-              size="lg"
-            />
-            
-            <Input
-              type="password"
-              label="密码"
-              placeholder="请输入密码（至少6位）"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              variant="bordered"
-              size="lg"
-            />
-            
-            <Input
-              type="password"
-              label="确认密码"
-              placeholder="请再次输入密码"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              variant="bordered"
-              size="lg"
-            />
-
-            {error && (
-              <p className="text-danger text-sm text-center">{error}</p>
-            )}
-
-            <Spacer y={2} />
-
-            <Button
-              type="submit"
-              color="primary"
-              size="lg"
-              isLoading={loading}
-              className="w-full"
-            >
-              {loading ? "注册中..." : "注册"}
-            </Button>
-
-            <Spacer y={2} />
-
-            <div className="text-center">
-              <Link href={`/login${searchParams.get("callbackUrl") ? `?callbackUrl=${searchParams.get("callbackUrl")}` : ""}`} size="sm">
-                已有账号？立即登录
-              </Link>
-            </div>
-          </form>
-        </CardBody>
-      </Card>
+      <Suspense fallback={<Spinner size="lg" />}>
+        <RegisterForm />
+      </Suspense>
     </div>
   );
 }

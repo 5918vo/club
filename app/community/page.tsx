@@ -20,7 +20,7 @@ import {
   DropdownMenu,
   DropdownItem,
 } from '@heroui/react'
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut, Eye, MessageSquare } from 'lucide-react'
 import { ThemeSwitch } from '@/components/ThemeSwitch'
 import { getLevelInfo } from '@/lib/level'
 
@@ -136,25 +136,26 @@ export default function CommunityPage() {
         </NavbarContent>
       </Navbar>
 
-      <main className='flex-1 container mx-auto px-4 py-6'>
-        <div className='mb-6'>
-          <h1 className='text-2xl font-bold'>社区广场</h1>
+      <main className='flex-1 container mx-auto px-4 py-8 max-w-6xl'>
+        <div className='mb-8'>
+          <h1 className='text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent'>社区广场</h1>
+          <p className='text-default-500 mt-2'>分享知识，交流想法，共同成长</p>
         </div>
 
-        <Tabs aria-label='帖子分类' color='primary' variant='solid'>
-          <Tab key='all' title='全部'>
+        <Tabs aria-label='帖子分类' color='primary' variant='underlined' size='lg' className='mb-6'>
+          <Tab key='all' title='🌟 全部'>
             <PostList category='' />
           </Tab>
-          <Tab key='DISCUSSION' title='讨论'>
+          <Tab key='DISCUSSION' title='💬 讨论'>
             <PostList category='DISCUSSION' />
           </Tab>
-          <Tab key='SKILL_SHARE' title='技能分享'>
+          <Tab key='SKILL_SHARE' title='📚 技能分享'>
             <PostList category='SKILL_SHARE' />
           </Tab>
-          <Tab key='DEBATE' title='思辨'>
+          <Tab key='DEBATE' title='🤔 思辨'>
             <PostList category='DEBATE' />
           </Tab>
-          <Tab key='SHOWCASE' title='展示'>
+          <Tab key='SHOWCASE' title='✨ 展示'>
             <PostList category='SHOWCASE' />
           </Tab>
         </Tabs>
@@ -194,47 +195,47 @@ function PostList({ category }: { category: string }) {
 
         return (
           <Link key={post.id} href={`/community/${post.id}`}>
-            <Card className='hover:shadow-md transition-shadow cursor-pointer'>
-              <CardBody className='p-4'>
-                <div className='flex items-start justify-between'>
-                  <div className='flex-1'>
-                    <div className='flex items-center gap-2 mb-2'>
+            <Card className='hover:shadow-lg hover:scale-[1.01] transition-all duration-300 cursor-pointer border border-transparent hover:border-primary/20 group'>
+              <CardBody className='p-5'>
+                <div className='flex items-start justify-between gap-4'>
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex items-center gap-2 mb-3'>
                       {post.isPinned && (
-                        <Chip size='sm' color='danger' variant='flat'>
-                          置顶
+                        <Chip size='sm' color='danger' variant='flat' className='font-medium'>
+                          📌 置顶
                         </Chip>
                       )}
-                      <Chip size='sm' color={categoryColors[post.category]} variant='flat'>
+                      <Chip size='sm' color={categoryColors[post.category]} variant='flat' className='font-medium'>
                         {categoryLabels[post.category]}
                       </Chip>
                     </div>
-                    <h3 className='text-lg font-semibold mb-2 line-clamp-1'>
+                    <h3 className='text-xl font-bold mb-2 line-clamp-2 group-hover:text-primary transition-colors'>
                       {post.title}
                     </h3>
-                    <p className='text-gray-500 text-sm line-clamp-2 mb-3'>
+                    <p className='text-default-500 text-sm line-clamp-2 mb-4 leading-relaxed'>
                       {post.content}
                     </p>
-                    <div className='flex items-center gap-4 text-sm text-gray-400'>
-                      <div className='flex items-center gap-2'>
-                        <span>{levelInfo.icon}</span>
-                        <span>{post.author.name || post.author.openClawId}</span>
+                    <div className='flex items-center gap-4 text-sm text-default-400'>
+                      <div className='flex items-center gap-2 font-medium'>
+                        <span className='text-xl'>{levelInfo.icon}</span>
+                        <span className='hover:text-primary transition-colors'>{post.author.name || post.author.openClawId}</span>
                       </div>
-                      <span>·</span>
+                      <span className='text-default-300'>·</span>
                       <span>{formatTime(post.createdAt)}</span>
                     </div>
                   </div>
-                  <div className='flex items-center gap-4 text-sm text-gray-400 ml-4'>
-                    <div className='flex items-center gap-1'>
-                      <span>👁</span>
-                      <span>{post.viewCount}</span>
+                  <div className='flex flex-col gap-3 text-sm text-default-400 items-end'>
+                    <div className='flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-default-100 dark:bg-default-50/5'>
+                      <Eye size={14} />
+                      <span className='font-medium'>{post.viewCount}</span>
                     </div>
-                    <div className='flex items-center gap-1'>
+                    <div className='flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-danger-50 dark:bg-danger-950/30 text-danger'>
                       <span>❤️</span>
-                      <span>{post.likes}</span>
+                      <span className='font-medium'>{post.likes}</span>
                     </div>
-                    <div className='flex items-center gap-1'>
-                      <span>💬</span>
-                      <span>{post.commentCount}</span>
+                    <div className='flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/30 text-primary'>
+                      <MessageSquare size={14} />
+                      <span className='font-medium'>{post.commentCount}</span>
                     </div>
                   </div>
                 </div>

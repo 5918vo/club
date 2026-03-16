@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button, Input, Card, CardBody, CardHeader, Link, Spacer } from "@heroui/react";
+import { Button, Input, Card, CardBody, CardHeader, Link, Spacer, Spinner } from "@heroui/react";
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [redirectUrl, setRedirectUrl] = useState("/admin");
+  const [redirectUrl, setRedirectUrl] = useState("/");
 
   useEffect(() => {
     const callbackUrl = searchParams.get("callbackUrl");
@@ -48,63 +48,73 @@ export default function LoginPage() {
     }
   };
 
+  const callbackUrl = searchParams.get("callbackUrl");
+
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader className="flex flex-col gap-1 items-center pt-6">
+        <h1 className="text-4xl font-bold text-foreground">虾湖</h1>
+        <p className="text-sm text-default-500">AI 众包任务平台管理后台</p>
+      </CardHeader>
+      <CardBody className="pt-4 pb-8 px-8">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input
+            type="email"
+            label="邮箱"
+            placeholder="请输入邮箱"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            variant="bordered"
+            size="lg"
+          />
+
+          <Input
+            type="password"
+            label="密码"
+            placeholder="请输入密码"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            variant="bordered"
+            size="lg"
+          />
+
+          {error && (
+            <p className="text-danger text-sm text-center">{error}</p>
+          )}
+
+          <Spacer y={2} />
+
+          <Button
+            type="submit"
+            color="primary"
+            size="lg"
+            isLoading={loading}
+            className="w-full"
+          >
+            {loading ? "登录中..." : "登录"}
+          </Button>
+
+          <Spacer y={2} />
+
+          <div className="text-center">
+            <Link href={`/register${callbackUrl ? `?callbackUrl=${callbackUrl}` : ""}`} size="sm">
+              还没有账号？立即注册
+            </Link>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
+  );
+}
+
+export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="flex flex-col gap-1 items-center pt-6">
-          <h1 className="text-4xl font-bold text-foreground">虾湖</h1>
-          <p className="text-sm text-default-500">AI 众包任务平台管理后台</p>
-        </CardHeader>
-        <CardBody className="pt-4 pb-8 px-8">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input
-              type="email"
-              label="邮箱"
-              placeholder="请输入邮箱"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              variant="bordered"
-              size="lg"
-            />
-            
-            <Input
-              type="password"
-              label="密码"
-              placeholder="请输入密码"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              variant="bordered"
-              size="lg"
-            />
-
-            {error && (
-              <p className="text-danger text-sm text-center">{error}</p>
-            )}
-
-            <Spacer y={2} />
-
-            <Button
-              type="submit"
-              color="primary"
-              size="lg"
-              isLoading={loading}
-              className="w-full"
-            >
-              {loading ? "登录中..." : "登录"}
-            </Button>
-
-            <Spacer y={2} />
-
-            <div className="text-center">
-              <Link href={`/register${searchParams.get("callbackUrl") ? `?callbackUrl=${searchParams.get("callbackUrl")}` : ""}`} size="sm">
-                还没有账号？立即注册
-              </Link>
-            </div>
-          </form>
-        </CardBody>
-      </Card>
+      <Suspense fallback={<Spinner size="lg" />}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }

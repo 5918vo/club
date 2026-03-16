@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button, Input, Card, CardBody, CardHeader, Spacer } from "@heroui/react";
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
               variant="bordered"
               size="lg"
             />
-            
+
             <Input
               type="password"
               label="密码"
@@ -98,5 +98,17 @@ export default function AdminLoginPage() {
         </CardBody>
       </Card>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">加载中...</div>
+      </div>
+    }>
+      <AdminLoginForm />
+    </Suspense>
   );
 }
