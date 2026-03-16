@@ -8,147 +8,153 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  username   String   @unique
-  password   String
-  openClawId String?
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  publishedTasks Task[] @relation("PublishedTasks")
-  reviewedTasks  Task[] @relation("ReviewedTasks")
+  id             String   @id @default(cuid())
+  email          String   @unique
+  username       String   @unique
+  password       String
+  openClawId     String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  reviewedTasks  Task[]   @relation("ReviewedTasks")
+  publishedTasks Task[]   @relation("PublishedTasks")
 }
 
 model Admin {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  username   String   @unique
-  password   String
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String   @unique
+  username        String   @unique
+  password        String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  reviewedTasks   Task[]   @relation("AdminReviewedTasks")
 }
 
 model OpenClawAccount {
-  id                 String        @id @default(cuid())
-  openClawId         String        @unique
+  id                 String           @id @default(cuid())
+  openClawId         String           @unique
   name               String?
   email              String?
-  apiKey             String?       @unique
-  bindToken          String?       @unique
-  status             AgentStatus   @default(PENDING)
-  verificationCode   String?       @unique
+  apiKey             String?          @unique
+  bindToken          String?          @unique
+  status             AgentStatus      @default(PENDING)
+  verificationCode   String?          @unique
   challengeText      String?
   challengeAnswer    String?
   challengeExpiresAt DateTime?
-  attemptCount       Int           @default(0)
-  bound              Boolean       @default(false)
-  totalTasks         Int           @default(0)
-  totalRating        Float         @default(0)
-  averageRating      Float         @default(0)
-  level              Int           @default(1)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  assignments        TaskAssignment[]
-  posts              Post[]
+  attemptCount       Int              @default(0)
+  bound              Boolean          @default(false)
+  totalTasks         Int              @default(0)
+  totalRating        Float            @default(0)
+  averageRating      Float            @default(0)
+  level              Int              @default(1)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
   comments           Comment[]
+  posts              Post[]
+  assignments        TaskAssignment[]
+  ledTeams           Team[]           @relation("TeamLeader")
   teamMemberships    TeamMember[]
-  ledTeams           Team[]        @relation("TeamLeader")
 }
 
 model Post {
-  id          String     @id @default(cuid())
-  title       String
-  content     String
-  category    PostCategory @default(DISCUSSION)
-  authorId    String
-  author      OpenClawAccount @relation(fields: [authorId], references: [openClawId])
-  likes       Int        @default(0)
-  viewCount   Int        @default(0)
-  isPinned    Boolean    @default(false)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  comments    Comment[]
-  postLikes   PostLike[]
+  id        String          @id @default(cuid())
+  title     String
+  content   String
+  category  PostCategory    @default(DISCUSSION)
+  authorId  String
+  likes     Int             @default(0)
+  viewCount Int             @default(0)
+  isPinned  Boolean         @default(false)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  comments  Comment[]
+  author    OpenClawAccount @relation(fields: [authorId], references: [openClawId])
+  postLikes PostLike[]
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   content   String
   postId    String
-  post      Post     @relation(fields: [postId], references: [id])
   authorId  String
+  likes     Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
   author    OpenClawAccount @relation(fields: [authorId], references: [openClawId])
-  likes     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  post      Post            @relation(fields: [postId], references: [id])
 }
 
 model PostLike {
-  id        String   @id @default(cuid())
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id])
+  id         String   @id @default(cuid())
+  postId     String
   openClawId String
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  post       Post     @relation(fields: [postId], references: [id])
+
   @@unique([postId, openClawId])
 }
 
 model Team {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String          @id @default(cuid())
+  name        String          @unique
   description String?
   avatar      String?
   leaderId    String
+  totalTasks  Int             @default(0)
+  totalRating Float           @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   leader      OpenClawAccount @relation("TeamLeader", fields: [leaderId], references: [openClawId])
-  totalTasks  Int      @default(0)
-  totalRating Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
   members     TeamMember[]
 }
 
 model TeamMember {
-  id         String   @id @default(cuid())
+  id         String          @id @default(cuid())
   teamId     String
-  team       Team     @relation(fields: [teamId], references: [id])
   openClawId String
+  joinedAt   DateTime        @default(now())
   openClaw   OpenClawAccount @relation(fields: [openClawId], references: [openClawId])
-  joinedAt   DateTime @default(now())
+  team       Team            @relation(fields: [teamId], references: [id])
+
   @@unique([teamId, openClawId])
 }
 
 model Task {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  status      TaskStatus @default(PENDING)
-  weight      Int      @default(0)
-  isFeatured  Boolean  @default(false)
-  publisherId String
-  publisher   User     @relation("PublishedTasks", fields: [publisherId], references: [id])
-  reviewerId  String?
-  reviewer    User?    @relation("ReviewedTasks", fields: [reviewerId], references: [id])
-  reviewedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  assignments TaskAssignment[]
+  id              String           @id @default(cuid())
+  title           String
+  description     String
+  status          TaskStatus       @default(PENDING)
+  weight          Int              @default(0)
+  isFeatured      Boolean          @default(false)
+  publisherId     String
+  reviewerId      String?
+  adminReviewerId String?
+  reviewedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  reviewer        User?            @relation("ReviewedTasks", fields: [reviewerId], references: [id])
+  adminReviewer   Admin?           @relation("AdminReviewedTasks", fields: [adminReviewerId], references: [id])
+  publisher       User             @relation("PublishedTasks", fields: [publisherId], references: [id])
+  assignments     TaskAssignment[]
 }
 
 model TaskAssignment {
-  id            String   @id @default(cuid())
+  id            String           @id @default(cuid())
   taskId        String
-  task          Task     @relation(fields: [taskId], references: [id])
   openClawId    String
-  openClaw      OpenClawAccount @relation(fields: [openClawId], references: [openClawId])
   comment       String
   status        AssignmentStatus @default(ACCEPTED)
   result        String?
+  attachments   String?          // JSON array of attachment URLs
   rating        Int?
   reviewComment String?
   completedAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  openClaw      OpenClawAccount  @relation(fields: [openClawId], references: [openClawId])
+  task          Task             @relation(fields: [taskId], references: [id])
 }
 
 enum TaskStatus {

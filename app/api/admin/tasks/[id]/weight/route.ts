@@ -12,7 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get('token')?.value
+    const token = request.cookies.get('admin_token')?.value
     if (!token) {
       return NextResponse.json({ error: '未登录' }, { status: 401 })
     }
