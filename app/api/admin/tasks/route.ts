@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
-    const tasksWithPopularity = tasks.map(task => ({
+    const tasksWithPopularity = tasks.map((task: typeof tasks[number]) => ({
       ...task,
       acceptedCount: task._count.assignments,
       popularity: task.weight + task._count.assignments,

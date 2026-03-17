@@ -275,16 +275,16 @@ describe('User Auth API', () => {
     it('should return 401 when invalid token', async () => {
       mockExtractTokenFromHeader.mockReturnValue(null)
       mockVerifyToken.mockReturnValue(null)
-      
+
       const request = createMockRequest('/api/auth/me', {
         cookies: { token: 'invalid-token' },
       })
-      
+
       const response = await MeGET(request)
       const data = await response.json()
-      
+
       expect(response.status).toBe(401)
-      expect(data.error).toBe('无效的令牌')
+      expect(data.error).toBe('未授权')
     })
   })
 

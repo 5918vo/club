@@ -46,6 +46,28 @@ function createRequest(url: string, cookies: Record<string, string> = {}) {
   return request
 }
 
+function createPostRequest(url: string, cookies: Record<string, string> = {}) {
+  const request = new NextRequest(new URL(url, 'http://localhost'), {
+    method: 'POST',
+  })
+  Object.entries(cookies).forEach(([key, value]) => {
+    request.cookies.set(key, value)
+  })
+  return request
+}
+
+function createPatchRequest(url: string, body: object, cookies: Record<string, string> = {}) {
+  const request = new NextRequest(new URL(url, 'http://localhost'), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  Object.entries(cookies).forEach(([key, value]) => {
+    request.cookies.set(key, value)
+  })
+  return request
+}
+
 describe('Admin Tasks API', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -60,7 +82,7 @@ describe('Admin Tasks API', () => {
 
     it('should return 403 if not admin', async () => {
       mockVerifyToken.mockReturnValue({ userId: '1', role: 'USER' })
-      const request = createRequest('/api/admin/tasks', { token: 'valid' })
+      const request = createRequest('/api/admin/tasks', { admin_token: 'valid' })
       const response = await GET(request)
       expect(response.status).toBe(403)
     })
@@ -93,7 +115,7 @@ describe('Admin Tasks API', () => {
         },
       ])
 
-      const request = createRequest('/api/admin/tasks', { token: 'valid' })
+      const request = createRequest('/api/admin/tasks', { admin_token: 'valid' })
       const response = await GET(request)
       const data = await response.json()
 
@@ -108,7 +130,7 @@ describe('Admin Tasks API', () => {
       mockPrisma.task.count.mockResolvedValue(1)
       mockPrisma.task.findMany.mockResolvedValue([])
 
-      const request = createRequest('/api/admin/tasks?status=PENDING', { token: 'valid' })
+      const request = createRequest('/api/admin/tasks?status=PENDING', { admin_token: 'valid' })
       await GET(request)
 
       expect(mockPrisma.task.findMany).toHaveBeenCalledWith(
@@ -123,7 +145,7 @@ describe('Admin Tasks API', () => {
       mockPrisma.task.count.mockResolvedValue(1)
       mockPrisma.task.findMany.mockResolvedValue([])
 
-      const request = createRequest('/api/admin/tasks?search=test', { token: 'valid' })
+      const request = createRequest('/api/admin/tasks?search=test', { admin_token: 'valid' })
       await GET(request)
 
       expect(mockPrisma.task.findMany).toHaveBeenCalledWith(
@@ -149,10 +171,10 @@ describe('Admin Tasks API', () => {
       mockPrisma.task.update.mockResolvedValue({
         id: 'task1',
         status: 'OPEN',
-        reviewerId: 'admin1',
+        adminReviewerId: 'admin1',
       })
 
-      const request = createRequest('/api/admin/tasks/task1/approve', { token: 'valid' })
+      const request = createPostRequest('/api/admin/tasks/task1/approve', { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await ApprovePost(request, { params })
       const data = await response.json()
@@ -163,7 +185,7 @@ describe('Admin Tasks API', () => {
         expect.objectContaining({
           data: {
             status: 'OPEN',
-            reviewerId: 'admin1',
+            adminReviewerId: 'admin1',
             reviewedAt: expect.any(Date),
           },
         })
@@ -177,7 +199,7 @@ describe('Admin Tasks API', () => {
         status: 'OPEN',
       })
 
-      const request = createRequest('/api/admin/tasks/task1/approve', { token: 'valid' })
+      const request = createPostRequest('/api/admin/tasks/task1/approve', { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await ApprovePost(request, { params })
 
@@ -195,10 +217,10 @@ describe('Admin Tasks API', () => {
       mockPrisma.task.update.mockResolvedValue({
         id: 'task1',
         status: 'CLOSED',
-        reviewerId: 'admin1',
+        adminReviewerId: 'admin1',
       })
 
-      const request = createRequest('/api/admin/tasks/task1/reject', { token: 'valid' })
+      const request = createPostRequest('/api/admin/tasks/task1/reject', { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await RejectPost(request, { params })
       const data = await response.json()
@@ -217,13 +239,7 @@ describe('Admin Tasks API', () => {
         weight: 50,
       })
 
-      const request = new NextRequest(new URL('/api/admin/tasks/task1/weight', 'http://localhost'), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weight: 50 }),
-      })
-      request.cookies.set('token', 'valid')
-
+      const request = createPatchRequest('/api/admin/tasks/task1/weight', { weight: 50 }, { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await WeightPatch(request, { params })
       const data = await response.json()
@@ -236,13 +252,7 @@ describe('Admin Tasks API', () => {
       mockVerifyToken.mockReturnValue({ userId: 'admin1', role: 'ADMIN' })
       mockPrisma.task.findUnique.mockResolvedValue({ id: 'task1' })
 
-      const request = new NextRequest(new URL('/api/admin/tasks/task1/weight', 'http://localhost'), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weight: -1 }),
-      })
-      request.cookies.set('token', 'valid')
-
+      const request = createPatchRequest('/api/admin/tasks/task1/weight', { weight: -1 }, { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await WeightPatch(request, { params })
 
@@ -262,7 +272,7 @@ describe('Admin Tasks API', () => {
         status: 'CLOSED',
       })
 
-      const request = createRequest('/api/admin/tasks/task1/close', { token: 'valid' })
+      const request = createPostRequest('/api/admin/tasks/task1/close', { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await ClosePost(request, { params })
       const data = await response.json()
@@ -278,7 +288,7 @@ describe('Admin Tasks API', () => {
         status: 'CLOSED',
       })
 
-      const request = createRequest('/api/admin/tasks/task1/close', { token: 'valid' })
+      const request = createPostRequest('/api/admin/tasks/task1/close', { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await ClosePost(request, { params })
 
@@ -298,7 +308,7 @@ describe('Admin Tasks API', () => {
         status: 'OPEN',
       })
 
-      const request = createRequest('/api/admin/tasks/task1/reopen', { token: 'valid' })
+      const request = createPostRequest('/api/admin/tasks/task1/reopen', { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await ReopenPost(request, { params })
       const data = await response.json()
@@ -314,7 +324,7 @@ describe('Admin Tasks API', () => {
         status: 'OPEN',
       })
 
-      const request = createRequest('/api/admin/tasks/task1/reopen', { token: 'valid' })
+      const request = createPostRequest('/api/admin/tasks/task1/reopen', { admin_token: 'valid' })
       const params = Promise.resolve({ id: 'task1' })
       const response = await ReopenPost(request, { params })
 

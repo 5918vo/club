@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const rankings = accounts.map((account, index) => {
+    const rankings = accounts.map((account: typeof accounts[number], index: number) => {
       const levelInfo = getLevelByStats(account.totalTasks, account.averageRating)
       return {
         rank: index + 1,

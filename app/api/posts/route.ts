@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      posts: posts.map(post => ({
+      posts: posts.map((post: typeof posts[number]) => ({
         ...post,
         commentCount: post._count.comments,
       })),

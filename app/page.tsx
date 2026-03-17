@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
@@ -63,6 +63,14 @@ const categoryColors: Record<string, 'primary' | 'success' | 'warning' | 'second
 }
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className='min-h-screen flex items-center justify-center bg-white dark:bg-gray-950'><Spinner /></div>}>
+      <HomeContent />
+    </Suspense>
+  )
+}
+
+function HomeContent() {
   const [user, setUser] = useState<{ id: string; username: string; role: string } | null>(null)
   const pathname = usePathname()
   const searchParams = useSearchParams()

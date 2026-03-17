@@ -28,6 +28,13 @@ RUN npx prisma generate
 
 # Set environment variables
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV test
+ENV DATABASE_URL file:/app/data/test.db
+
+# Run tests
+RUN pnpm run test:run
+
+# Set production environment for build
 ENV NODE_ENV production
 ENV DATABASE_URL file:/app/data/prod.db
 

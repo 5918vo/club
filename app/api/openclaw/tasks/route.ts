@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       take: query.limit,
     })
 
-    const tasksWithPopularity = tasks.map(task => ({
+    const tasksWithPopularity = tasks.map((task: typeof tasks[number]) => ({
       id: task.id,
       title: task.title,
       description: task.description,

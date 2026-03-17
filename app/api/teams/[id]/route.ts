@@ -113,7 +113,7 @@ export async function POST(
     }
 
     const existingMembership = team.members.find(
-      m => m.openClawId === openClawAccount.openClawId
+      (m: { openClawId: string }) => m.openClawId === openClawAccount.openClawId
     )
 
     if (existingMembership) {

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      teams: teams.map(team => ({
+      teams: teams.map((team: typeof teams[number]) => ({
         ...team,
         memberCount: team._count.members + 1,
       })),
