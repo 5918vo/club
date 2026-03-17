@@ -28,14 +28,15 @@ import {
   SelectItem,
   Spinner,
 } from "@heroui/react";
-import { 
-  Users, 
-  ClipboardList, 
-  BarChart3, 
-  LogOut, 
+import {
+  Users,
+  ClipboardList,
+  BarChart3,
+  LogOut,
   Settings,
   Search,
   TrendingUp,
+  Bot,
 } from "lucide-react";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 
@@ -78,7 +79,20 @@ interface TaskListItem {
   popularity: number;
 }
 
-type MenuKey = "users" | "tasks" | "statistics";
+interface OpenClawListItem {
+  id: string;
+  openClawId: string;
+  name: string | null;
+  email: string | null;
+  status: string;
+  bound: boolean;
+  totalTasks: number;
+  averageRating: number;
+  level: number;
+  createdAt: string;
+}
+
+type MenuKey = "users" | "tasks" | "statistics" | "openclaw";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -95,6 +109,10 @@ export default function AdminPage() {
   const [taskPage, setTaskPage] = useState(1);
   const [taskSearch, setTaskSearch] = useState("");
   const [taskStatus, setTaskStatus] = useState("");
+
+  const [openclawPage, setOpenclawPage] = useState(1);
+  const [openclawSearch, setOpenclawSearch] = useState("");
+  const [openclawStatus, setOpenclawStatus] = useState("");
 
   const usersApiUrl = activeMenu === "users"
     ? `/api/admin/users?page=${userPage}&limit=10${userSearch ? `&search=${userSearch}` : ""}${userStatus ? `&status=${userStatus}` : ""}`
@@ -114,6 +132,15 @@ export default function AdminPage() {
     fetcher
   );
 
+  const openclawsApiUrl = activeMenu === "openclaw"
+    ? `/api/admin/openclaw?page=${openclawPage}&limit=10${openclawSearch ? `&search=${openclawSearch}` : ""}${openclawStatus ? `&status=${openclawStatus}` : ""}`
+    : null;
+
+  const { data: openclawsData, isLoading: openclawLoading, mutate: mutateOpenclaws } = useSWR(
+    openclawsApiUrl,
+    fetcher
+  );
+
   const userList = usersData?.users || [];
   const userTotal = usersData?.pagination?.total || 0;
   const userTotalPages = Math.ceil(userTotal / 10);
@@ -121,6 +148,10 @@ export default function AdminPage() {
   const taskList = tasksData?.tasks || [];
   const taskTotal = tasksData?.pagination?.total || 0;
   const taskTotalPages = Math.ceil(taskTotal / 10);
+
+  const openclawList = openclawsData?.openclaws || [];
+  const openclawTotal = openclawsData?.pagination?.total || 0;
+  const openclawTotalPages = Math.ceil(openclawTotal / 10);
 
   useEffect(() => {
     fetchAdmin();
@@ -267,6 +298,39 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateOpenClawStatus = async (openclawId: string, status: string) => {
+    try {
+      const response = await fetch("/api/admin/openclaw", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ openclawId, status }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "操作失败");
+        return;
+      }
+
+      mutateOpenclaws();
+    } catch (error) {
+      alert("网络错误，请稍后重试");
+    }
+  };
+
+  const getOpenClawStatusChip = (status: string) => {
+    const statusConfig: Record<string, { color: "warning" | "success" | "danger" | "default"; label: string }> = {
+      PENDING: { color: "warning", label: "待审核" },
+      ACTIVE: { color: "success", label: "已激活" },
+      BANNED: { color: "danger", label: "已封禁" },
+    };
+    const config = statusConfig[status] || { color: "default", label: status };
+    return <Chip size="sm" variant="flat" color={config.color}>{config.label}</Chip>;
+  };
+
   const getStatusChip = (status: string) => {
     const statusConfig: Record<string, { color: "warning" | "success" | "primary" | "danger" | "default"; label: string }> = {
       PENDING: { color: "warning", label: "待审核" },
@@ -298,6 +362,11 @@ export default function AdminPage() {
       key: "tasks" as MenuKey,
       label: "任务管理",
       icon: ClipboardList,
+    },
+    {
+      key: "openclaw" as MenuKey,
+      label: "OpenClaw管理",
+      icon: Bot,
     },
     {
       key: "statistics" as MenuKey,
@@ -545,6 +614,139 @@ export default function AdminPage() {
                             onPress={() => handleReopenTask(item.id)}
                           >
                             重新开放
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </>
+        );
+
+      case "openclaw":
+        return (
+          <>
+            <div className="flex items-center justify-end mb-6">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="搜索OpenClaw ID或名称"
+                  value={openclawSearch}
+                  onChange={(e) => setOpenclawSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setOpenclawPage(1);
+                      mutateOpenclaws();
+                    }
+                  }}
+                  startContent={<Search size={18} className="text-default-400" />}
+                  className="w-64"
+                />
+                <Select
+                  placeholder="状态筛选"
+                  selectedKeys={openclawStatus ? [openclawStatus] : []}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    setOpenclawStatus(selected || "");
+                    setOpenclawPage(1);
+                  }}
+                  className="w-32"
+                >
+                  <SelectItem key="PENDING">待审核</SelectItem>
+                  <SelectItem key="ACTIVE">已激活</SelectItem>
+                  <SelectItem key="BANNED">已封禁</SelectItem>
+                </Select>
+              </div>
+            </div>
+
+            <Table
+              aria-label="OpenClaw列表"
+              bottomContent={
+                openclawTotalPages > 1 ? (
+                  <div className="flex w-full justify-center">
+                    <Pagination
+                      isCompact
+                      showControls
+                      showShadow
+                      color="primary"
+                      page={openclawPage}
+                      total={openclawTotalPages}
+                      onChange={(page) => setOpenclawPage(page)}
+                    />
+                  </div>
+                ) : null
+              }
+            >
+              <TableHeader>
+                <TableColumn>OpenClaw ID</TableColumn>
+                <TableColumn>名称</TableColumn>
+                <TableColumn>邮箱</TableColumn>
+                <TableColumn>状态</TableColumn>
+                <TableColumn>绑定</TableColumn>
+                <TableColumn>任务数</TableColumn>
+                <TableColumn>评分</TableColumn>
+                <TableColumn>等级</TableColumn>
+                <TableColumn>创建时间</TableColumn>
+                <TableColumn>操作</TableColumn>
+              </TableHeader>
+              <TableBody
+                items={openclawList}
+                isLoading={openclawLoading}
+                loadingContent={<Spinner />}
+                emptyContent="暂无OpenClaw数据"
+              >
+                {(item: OpenClawListItem) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.openClawId}</TableCell>
+                    <TableCell>{item.name || "-"}</TableCell>
+                    <TableCell>{item.email || "-"}</TableCell>
+                    <TableCell>{getOpenClawStatusChip(item.status)}</TableCell>
+                    <TableCell>
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color={item.bound ? "success" : "default"}
+                      >
+                        {item.bound ? "已绑定" : "未绑定"}
+                      </Chip>
+                    </TableCell>
+                    <TableCell>{item.totalTasks}</TableCell>
+                    <TableCell>{item.averageRating.toFixed(1)}</TableCell>
+                    <TableCell>Lv.{item.level}</TableCell>
+                    <TableCell>
+                      {new Date(item.createdAt).toLocaleDateString("zh-CN")}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {item.status === "PENDING" && (
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            color="success"
+                            onPress={() => handleUpdateOpenClawStatus(item.id, "ACTIVE")}
+                          >
+                            激活
+                          </Button>
+                        )}
+                        {item.status === "ACTIVE" && (
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            color="danger"
+                            onPress={() => handleUpdateOpenClawStatus(item.id, "BANNED")}
+                          >
+                            封禁
+                          </Button>
+                        )}
+                        {item.status === "BANNED" && (
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            color="success"
+                            onPress={() => handleUpdateOpenClawStatus(item.id, "ACTIVE")}
+                          >
+                            解封
                           </Button>
                         )}
                       </div>
