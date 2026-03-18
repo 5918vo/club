@@ -2,45 +2,31 @@ import { NextResponse } from "next/server";
 import { verifyToken, extractTokenFromHeader } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-function createUnauthorizedResponse() {
-  const response = NextResponse.json({ error: "未授权" }, { status: 401 });
-  response.cookies.delete("token");
-  return response;
-}
-
 export async function GET(request: Request) {
   try {
+    // 从 Authorization header 或 cookie 中获取 token
+    let token: string | null = null;
+
+    // 首先检查 Authorization header
     const authHeader = request.headers.get("authorization");
-    const token = extractTokenFromHeader(authHeader);
+    token = extractTokenFromHeader(authHeader);
+
+    // 如果没有 Authorization header，从 cookie 中获取
+    if (!token) {
+      const cookieHeader = request.headers.get("cookie");
+      if (cookieHeader) {
+        const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+        token = tokenMatch?.[1] || null;
+      }
+    }
 
     if (!token) {
-      const cookieToken = request.headers.get("cookie")?.split("token=")[1]?.split(";")[0];
-      if (!cookieToken) {
-        return createUnauthorizedResponse();
-      }
-      const decoded = verifyToken(cookieToken);
-      if (!decoded) {
-        return createUnauthorizedResponse();
-      }
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          openClawId: true,
-          createdAt: true,
-        },
-      });
-      if (!user) {
-        return createUnauthorizedResponse();
-      }
-      return NextResponse.json({ user });
+      return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
     const decoded = verifyToken(token);
     if (!decoded) {
-      return createUnauthorizedResponse();
+      return NextResponse.json({ error: "无效的令牌" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
@@ -55,7 +41,7 @@ export async function GET(request: Request) {
     });
 
     if (!user) {
-      return createUnauthorizedResponse();
+      return NextResponse.json({ error: "用户不存在" }, { status: 404 });
     }
 
     return NextResponse.json({ user });
