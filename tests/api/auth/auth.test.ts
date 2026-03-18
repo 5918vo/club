@@ -284,7 +284,7 @@ describe('User Auth API', () => {
       const data = await response.json()
 
       expect(response.status).toBe(401)
-      expect(data.error).toBe('未授权')
+      expect(data.error).toBe('无效的令牌')
     })
   })
 

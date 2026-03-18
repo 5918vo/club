@@ -45,7 +45,8 @@ describe('Challenge Library', () => {
         const challenge = generateChallenge()
         const answer = parseFloat(challenge.answer)
         expect(answer).toBeGreaterThanOrEqual(0)
-        expect(answer).toBeLessThanOrEqual(70) // max num1 (50) + max num2 (20)
+        // num1: 10-49 (max 49), num2: 5-24 (max 24), add: max 73
+        expect(answer).toBeLessThanOrEqual(73)
       }
     })
   })
